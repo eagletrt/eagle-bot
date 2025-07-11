@@ -21,7 +21,6 @@ tag_cache = {
 def reply(msg):
     msgId = msg["message_id"]
     chatId = msg["chat"]["id"]
-    userId = msg["from"]["id"]
     threadId = msg.get("message_thread_id", None)
     text = msg.get("text", "").replace("@eagletrtbot", "").strip()
 

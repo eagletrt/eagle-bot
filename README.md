@@ -1,1 +1,1 @@
-# eagletrtbot-v2
+# eagle-bot
