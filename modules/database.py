@@ -1,7 +1,7 @@
 from datetime import datetime
 from pony.orm import Database, Required, Optional, Set
 
-db = Database("sqlite", "../eagletrtbot.db", create_db=True)
+db = Database("sqlite", "/data/eagletrtbot.db", create_db=True)
 
 
 class Task(db.Entity):

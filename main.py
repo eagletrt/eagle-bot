@@ -8,7 +8,7 @@ from modules.api_client import EagleAPI
 
 bot = Bot(settings.BOT_TOKEN)
 nocodb = NocoDB("https://nocodb.eagletrt.it", settings.NOCODB_API_TOKEN)
-eagleApi = EagleAPI("https://api.eagletrt.it", "")
+eagle_api = EagleAPI("https://api.eagletrt.it", None)
 tag_cache = {
     "areas": nocodb.area_tags(),
     "workgroups": nocodb.workgroup_tags(),
@@ -72,14 +72,14 @@ def reply(msg):
             bot.sendMessage(chatId, "You are not registered in the NocoDB database.", reply_to_message_id=msgId)
             return
 
-        ore = eagleApi.oreLab(team_user)
+        ore = eagle_api.oreLab(team_user)
         ore = utils.pretty_time(ore['ore'])
         bot.sendMessage(chatId, f"This month you've spent <b>{ore}</b> in the lab!",
                         reply_to_message_id=msgId, parse_mode='HTML')
 
     # /inlab
     elif text == "/inlab" or "@inlab" in text.lower().split():
-        inlab = eagleApi.inlab()
+        inlab = eagle_api.inlab()
         tags = [
             nocodb.username_from_email(email)
             for email in inlab['people']
