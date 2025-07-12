@@ -133,7 +133,7 @@ class NocoDB:
     def email_from_username(self, username: str) -> str:
         res = self._session.get(f"{self.base_url}/api/v2/tables/m3rsrrmnhhxxw0p/records", params={
             "limit": 1000,
-            "where": f"(Telegram Username,eq,@{username})",
+            "where": f"(Telegram Username,like,@{username})~or(Telegram Username,like,{username})",
             "fields": "Team Email"
         })
         items = res.json().get("list")

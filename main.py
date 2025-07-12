@@ -71,12 +71,12 @@ def reply(msg):
             bot.sendMessage(chatId, "You don't have a Telegram username :(", reply_to_message_id=msgId)
             return
 
-        team_user = nocodb.email_from_username(username).split('@')[0]
-        if not team_user:
+        team_email = nocodb.email_from_username(username)
+        if not team_email:
             bot.sendMessage(chatId, "You are not registered in the NocoDB database.", reply_to_message_id=msgId)
             return
 
-        ore = eagle_api.oreLab(team_user)
+        ore = eagle_api.oreLab(team_email.split('@')[0])
         ore = utils.pretty_time(ore['ore'])
         bot.sendMessage(chatId, f"This month you've spent <b>{ore}</b> in the lab!",
                         reply_to_message_id=msgId, parse_mode='HTML')
