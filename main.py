@@ -29,32 +29,36 @@ def reply(msg):
         if tag.lower() in text.lower().split():
             members = nocodb.area_members(tag.strip('@'))
             tag_list = ' '.join(members)
-            bot.sendMessage(chatId, f"<b>{tag}</b>:\n{tag_list}",
-                            reply_to_message_id=threadId, parse_mode='HTML')
+            if tag_list:
+                bot.sendMessage(chatId, f"<b>{tag}</b>:\n{tag_list}",
+                                reply_to_message_id=threadId, parse_mode='HTML')
 
     # Check workgroup tags
     for tag in tag_cache["workgroups"]:
         if tag.lower() in text.lower().split():
             members = nocodb.workgroup_members(tag.strip('@'))
             tag_list = ' '.join(members)
-            bot.sendMessage(chatId, f"<b>{tag}</b>:\n{tag_list}",
-                            reply_to_message_id=threadId, parse_mode='HTML')
+            if tag_list:
+                bot.sendMessage(chatId, f"<b>{tag}</b>:\n{tag_list}",
+                                reply_to_message_id=threadId, parse_mode='HTML')
 
     # Check project tags
     for tag in tag_cache["projects"]:
         if tag.lower() in text.lower().split():
             members = nocodb.project_members(tag.strip('@'))
             tag_list = ' '.join(members)
-            bot.sendMessage(chatId, f"<b>{tag}</b>:\n{tag_list}",
-                            reply_to_message_id=threadId, parse_mode='HTML')
+            if tag_list:
+                bot.sendMessage(chatId, f"<b>{tag}</b>:\n{tag_list}",
+                                reply_to_message_id=threadId, parse_mode='HTML')
 
     # Check role tags
     for tag in tag_cache["roles"]:
         if tag.lower() in text.lower().split():
             members = nocodb.role_members(tag.strip('@'))
             tag_list = ' '.join(members)
-            bot.sendMessage(chatId, f"<b>{tag}</b>:\n{tag_list}",
-                            reply_to_message_id=threadId, parse_mode='HTML')
+            if tag_list:
+                bot.sendMessage(chatId, f"<b>{tag}</b>:\n{tag_list}",
+                                reply_to_message_id=threadId, parse_mode='HTML')
 
     # Hello World
     if text == "/start":
