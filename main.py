@@ -135,6 +135,19 @@ def reply(msg):
         )
         bot.sendMessage(chatId, f"✅ Added \"{task.text}\"", reply_to_message_id=threadId)
 
+    # tag list
+    elif text == "/tags":
+        bot.sendMessage(chatId, f"#️⃣ <b>Tag List</b>\n\n"
+                                f"<b>Areas</b>\n"
+                                f"{', '.join(tag_cache['areas'])}\n\n"
+                                f"<b>Workgroups</b>\n"
+                                f"{', '.join(tag_cache['workgroups'])}\n\n"
+                                f"<b>Projects</b>\n"
+                                f"{'", '.join(tag_cache['projects'])}\n\n"
+                                f"<b>Roles</b>\n"
+                                f"{', '.join(tag_cache['roles'])}",
+                        reply_to_message_id=threadId, parse_mode='HTML')
+
 
 bot.message_loop({'chat': reply})
 while True:
