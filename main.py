@@ -66,7 +66,7 @@ def reply(msg):
 
     # Ore Lab
     elif text == "/ore":
-        username = msg["from"].get("username", "")
+        username = msg["from"].get("username", "").lower()
         if not username:
             bot.sendMessage(chatId, "You don't have a Telegram username :(", reply_to_message_id=msgId)
             return
