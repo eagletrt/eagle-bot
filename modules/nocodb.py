@@ -29,10 +29,10 @@ class NocoDB:
     def project_tags(self) -> list[str]:
         res = self._session.get(f"{self.base_url}/api/v2/tables/ma3scczigje9u17/records", params={
             "limit": 1000,
-            "fields": "Full Name"
+            "fields": "Tag"
         })
         items = res.json().get("list")
-        return [f"@{item['Full Name']}" for item in items]
+        return [f"@{item['Tag']}" for item in items]
 
     def role_tags(self) -> list[str]:
         res = self._session.get(f"{self.base_url}/api/v2/tables/mpur65wgd6gqi98/records", params={
@@ -89,7 +89,7 @@ class NocoDB:
     def project_members(self, tag: str) -> list[str]:
         nocoid = self._session.get(f"{self.base_url}/api/v2/tables/ma3scczigje9u17/records", params={
             "limit": 1000,
-            "where": f"(Full Name,eq,{tag})",
+            "where": f"(Tag,eq,{tag})",
             "fields": "Id"
         }).json().get("list")[0].get('Id')
 
