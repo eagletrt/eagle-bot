@@ -143,7 +143,7 @@ def reply(msg):
                                 f"<b>Workgroups</b>\n"
                                 f"{', '.join(tag_cache['workgroups'])}\n\n"
                                 f"<b>Projects</b>\n"
-                                f"{'", '.join(tag_cache['projects'])}\n\n"
+                                f"{', '.join(tag_cache['projects'])}\n\n"
                                 f"<b>Roles</b>\n"
                                 f"{', '.join(tag_cache['roles'])}",
                         reply_to_message_id=threadId, parse_mode='HTML')
