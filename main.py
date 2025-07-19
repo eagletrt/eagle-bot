@@ -22,7 +22,12 @@ def reply(msg):
     msgId = msg["message_id"]
     chatId = msg["chat"]["id"]
     threadId = msg.get("message_thread_id", None)
-    text = msg.get("text", "").replace("@eagletrtbot", "").strip()
+    text = msg.get("text", "") or msg.get("caption", "")
+    text = text.replace("@eagletrtbot", "").strip()
+
+    if not text:
+        print("Got a non-text message:", msg)
+        return
 
     # Check area tags
     for tag in tag_cache["areas"]:
