@@ -16,7 +16,7 @@ class NocoDB:
             "fields": "Tag"
         })
         items = res.json().get("list")
-        return [f"@{item['Tag']}" for item in items]
+        return [f"@{item['Tag'].lower().strip()}" for item in items]
 
     def workgroup_tags(self) -> list[str]:
         res = self._session.get(f"{self.base_url}/api/v2/tables/m5gpr28sp047j7w/records", params={
@@ -24,7 +24,7 @@ class NocoDB:
             "fields": "Tag"
         })
         items = res.json().get("list")
-        return [f"@{item['Tag']}" for item in items]
+        return [f"@{item['Tag'].lower().strip()}" for item in items]
 
     def project_tags(self) -> list[str]:
         res = self._session.get(f"{self.base_url}/api/v2/tables/ma3scczigje9u17/records", params={
@@ -32,7 +32,7 @@ class NocoDB:
             "fields": "Tag"
         })
         items = res.json().get("list")
-        return [f"@{item['Tag']}" for item in items]
+        return [f"@{item['Tag'].lower().strip()}" for item in items]
 
     def role_tags(self) -> list[str]:
         res = self._session.get(f"{self.base_url}/api/v2/tables/mpur65wgd6gqi98/records", params={
@@ -40,7 +40,7 @@ class NocoDB:
             "fields": "Tag"
         })
         items = res.json().get("list")
-        return [f"@{item['Tag']}" for item in items]
+        return [f"@{item['Tag'].lower().strip()}" for item in items]
 
     def area_members(self, tag: str) -> list[str]:
         nocoid = self._session.get(f"{self.base_url}/api/v2/tables/mbftgdmmi4t668c/records", params={
