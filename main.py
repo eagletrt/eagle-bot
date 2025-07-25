@@ -91,7 +91,7 @@ def reply(msg):
     elif text == "/odg reset" or text == "/todo reset":
         if odg := ODG.get(chatId=chatId, threadId=threadId):
             odg.reset()
-        bot.sendMessage(chatId, "✅ Todo List cleared.", reply_to_message_id=threadId)
+        bot.setMessageReaction((chatId, msgId), [{'type': 'emoji', 'emoji': "🎉"}])
 
     # odg remove
     elif text.startswith("/odg remove ") or text.startswith("/todo remove "):
@@ -105,7 +105,7 @@ def reply(msg):
             return
 
         if (1 <= task_id <= odg.tasks.count()) and odg.remove_task(task_id-1):
-            bot.sendMessage(chatId, f"✅ Removed task #{task_id}", reply_to_message_id=threadId)
+            bot.setMessageReaction((chatId, msgId), [{'type': 'emoji', 'emoji': "👍"}])
         else:
             bot.sendMessage(chatId, f"❌ Task #{task_id} not found.", reply_to_message_id=threadId)
 
@@ -119,7 +119,7 @@ def reply(msg):
             created_by=msg['from'].get("first_name", "") + " " + msg['from'].get("last_name", ""),
             odg=odg
         )
-        bot.sendMessage(chatId, f"✅ Added \"{task.text}\"", reply_to_message_id=threadId)
+        bot.setMessageReaction((chatId, msgId), [{'type': 'emoji', 'emoji': "✍"}])
 
     # tag list
     elif text == "/tags":
