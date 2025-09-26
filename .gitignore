@@ -1,5 +1,21 @@
+#misc
 .DS_Store
-.idea/
-.venv/
-__pycache__/
-*.db
+*.env
+
+#Remove visual studio code preference
+.vscode/
+
+#Remove under working files
+*.dis
+
+#GitHub workflow
+.github/
+
+#NocoDB instance data
+nocodb/
+
+#Python log
+*.log
+
+#Python venv
+myenv/
