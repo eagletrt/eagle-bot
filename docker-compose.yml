@@ -11,3 +11,4 @@ services:
       - NOCO_URL=nocodb.eagletrt.it
       - NOCO_API_KEY=your_nocodb_api_key_here
       - NOCO_BASE_ID=your_nocodb_base_id_here
+      - EAGLE_API_URL=api.eagletrt.it
