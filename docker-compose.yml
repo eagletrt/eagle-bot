@@ -8,6 +8,6 @@ services:
       - PGUID=1000
       - PUID=1000
       - TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
-      - NOCO_URL=nocodb.eagletrt.it
+      - NOCO_URL=https://nocodb.eagletrt.it
       - NOCO_API_KEY=your_nocodb_api_key_here
-      - EAGLE_API_URL=api.eagletrt.it
+      - EAGLE_API_URL=https://api.eagletrt.it
