@@ -2,8 +2,13 @@ import os
 import logging
 from modules.nocodb import NocoDB
 from modules.api_client import EagleAPI
-from telegram import Update, ForceReply, BotCommand
-from telegram.ext import Application, CommandHandler, ContextTypes
+from modules.database import ODG, Task
+from pony.orm import db_session
+from telegram import Update, BotCommand
+from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+import re
+
+# FIXME: handle message modifications and deletions
 
 # Environment variables
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN") # Telegram bot token
@@ -14,6 +19,7 @@ EAGLE_API_URL = os.getenv("EAGLE_API_URL")  # e.g. api.eagletrt.it
 # Create global instances of NocoDB and EagleAPI
 nocodb = None
 eagle_api = None
+tag_cache = {}
 
 # Custom log color
 COLORS = {
@@ -49,92 +55,56 @@ class BracketColorFormatter(ColorFormatter):
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(BracketColorFormatter("%(asctime)s [%(levelname)s] %(message)s"))
 
-file_handler = logging.FileHandler("/data/bot.log", mode="a", encoding="utf-8")
-file_handler.setLevel(logging.WARNING, logging.ERROR)
+file_handler = logging.FileHandler("./data/bot.log", mode="a", encoding="utf-8")
+file_handler.setLevel(logging.WARNING)
 file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
 
 logging.basicConfig(level=logging.INFO, handlers=[console_handler, file_handler])
 
-# TODO:
-# tag_cache = {
-#     "areas": nocodb.area_tags(),
-#     "workgroups": nocodb.workgroup_tags(),
-#     "projects": nocodb.project_tags(),
-#     "roles": nocodb.role_tags()
-# }
-def reply(msg):
-    # Check nocodb tags
-    for tag in utils.find_tags(text.lower()):
-        if tag in tag_cache["areas"]:
-            members = nocodb.area_members(tag.lstrip('@'))
-        elif tag in tag_cache["workgroups"]:
-            members = nocodb.workgroup_members(tag.lstrip('@'))
-        elif tag in tag_cache["projects"]:
-            members = nocodb.project_members(tag.lstrip('@'))
-        elif tag in tag_cache["roles"]:
-            members = nocodb.role_members(tag.lstrip('@'))
-        else:
-            continue
-
-        if members:
-            tag_list = ' '.join(members)
-            bot.sendMessage(chatId, f"<b>{tag}</b>:\n{tag_list}",
-                            reply_to_message_id=threadId, parse_mode='HTML')
-
-    # odg show
-    if text == "/odg" or text == "/todo":
-        if not (odg := ODG.get(chatId=chatId, threadId=threadId)):
-            odg = ODG(chatId=chatId, threadId=threadId)
-        bot.sendMessage(chatId, f"📝 <b>Todo List</b>\n\n{odg}",
-                        reply_to_message_id=threadId, parse_mode='HTML')
-
-    # odg reset
-    if text == "/odg reset" or text == "/todo reset":
-        if odg := ODG.get(chatId=chatId, threadId=threadId):
-            odg.reset()
-        bot.setMessageReaction((chatId, msgId), [{'type': 'emoji', 'emoji': "🎉"}])
-
-    # odg remove
-    if text.startswith("/odg remove ") or text.startswith("/todo remove "):
-        if not (odg := ODG.get(chatId=chatId, threadId=threadId)):
-            odg = ODG(chatId=chatId, threadId=threadId)
-
-        try:
-            task_id = int(text.split(' ', 2)[2])
-        except ValueError:
-            bot.sendMessage(chatId, "❌ Task ID must be a number.", reply_to_message_id=threadId)
-            return
-
-        if (1 <= task_id <= odg.tasks.count()) and odg.remove_task(task_id-1):
-            bot.setMessageReaction((chatId, msgId), [{'type': 'emoji', 'emoji': "👍"}])
-        else:
-            bot.sendMessage(chatId, f"❌ Task #{task_id} not found.", reply_to_message_id=threadId)
-
-    # odg add
-    if text.startswith("/odg ") or text.startswith("/todo "):
-        if not (odg := ODG.get(chatId=chatId, threadId=threadId)):
-            odg = ODG(chatId=chatId, threadId=threadId)
-
-        task = Task(
-            text=text.split(' ', 1)[1],
-            created_by=msg['from'].get("first_name", "") + " " + msg['from'].get("last_name", ""),
-            odg=odg
-        )
-        bot.setMessageReaction((chatId, msgId), [{'type': 'emoji', 'emoji': "✍"}])
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
     await update.message.reply_html(
-        rf"Hi {user.mention_html()}!",
-        reply_markup=ForceReply(selective=True),
+        rf"Hi {user.mention_html()}!"
     )
     logging.info(f"/start requested by @{user.username}")
 
-# TODO:
+# FIXME: React to the message (not send)
 async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    return
+    chat_id = update.effective_chat.id
+    thread_id = update.effective_message.message_thread_id
+    text = update.message.text
+    text = text.replace("@eagletrtbot", "").strip()
 
-# FIXME: \n dopo i : (giusto ma non funziona)
+    with db_session:
+        # Cerca ODG esistente, altrimenti crealo
+        if not (odg := ODG.get(chatId=chat_id, threadId=thread_id)):
+            odg = ODG(chatId=chat_id, threadId=thread_id)
+
+        if update.message.text.startswith("/odg reset"):
+            odg.reset()
+            return await update.message.reply_text("👍", reply_to_message_id=update.message.message_id)
+        elif update.message.text.startswith("/odg remove"):
+            try:
+                task_id = int(update.message.text.split(' ', 2)[2])
+            except (ValueError, IndexError):
+                return await update.message.reply_text("Task ID must be a number.")
+            
+            if odg.remove_task(task_id-1):
+                return await update.message.reply_text("👍", reply_to_message_id=update.message.message_id)
+            else:
+                return await update.message.reply_text(f"Task #{task_id} not found in the todo list.")
+        elif update.message.text.startswith("/odg "):
+            Task(
+                text=text.split(' ', 1)[1],
+                created_by=(getattr(update.effective_user, "first_name", "") or "") + " " + (getattr(update.effective_user, "last_name", "") or ""),
+                odg=odg
+            )
+            return await update.message.reply_text("✍️", reply_to_message_id=update.message.message_id)
+        else:
+            return await update.message.reply_html(
+                f"📝 <b>Todo List</b>\n\n{odg}"
+            )
+
 async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     inlab = eagle_api.inlab()
     tags = [
@@ -145,8 +115,7 @@ async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("The lab is currently empty :(")
     else:
         await update.message.reply_html(
-            rf"<b>{inlab['count']} people in the lab:</b>\n{' '.join(tags)}",
-            reply_markup=ForceReply(selective=True),
+            f"<b>{inlab['count']} people in the lab:</b>\n{' '.join(tags)}"
         )
     
     user = update.effective_user.username
@@ -154,6 +123,10 @@ async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     username = update.effective_user.username
+
+    if not username:
+        await update.message.reply_text("You need a Telegram username to use this command.")
+        return
     
     team_email = nocodb.email_from_username(username)
     if not team_email:
@@ -171,8 +144,7 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     ore = pretty_time(ore['ore'])
 
     await update.message.reply_html(
-        rf"This month you've spent <b>{ore}</b> in the lab!",
-        reply_markup=ForceReply(selective=True),
+        rf"This month you've spent <b>{ore}</b> in the lab!"
     )
 
     logging.info(f"/ore requested by @{username}")
@@ -183,12 +155,37 @@ async def tags(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         f"<b>Areas</b>\n{', '.join(tag_cache['areas'])}\n\n"
         f"<b>Workgroups</b>\n{', '.join(tag_cache['workgroups'])}\n\n"
         f"<b>Projects</b>\n{', '.join(tag_cache['projects'])}\n\n"
-        f"<b>Roles</b>\n{', '.join(tag_cache['roles'])}",
-        reply_markup=ForceReply(selective=True),
+        f"<b>Roles</b>\n{', '.join(tag_cache['roles'])}"
     )
 
     user = update.effective_user.username
     logging.info(f"/tags requested by @{user}")
+
+async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    msg = update.message
+    if not msg or not msg.text:
+        return
+
+    text = msg.text.lower()
+    found_tags = set(re.findall(r'@[\w\.-]+', text))
+    if not found_tags:
+        return
+
+    for tag in found_tags:
+        if tag in tag_cache.get("areas", []):
+            members = nocodb.members(tag.lstrip('@'), "area")
+        elif tag in tag_cache.get("workgroups", []):
+            members = nocodb.members(tag.lstrip('@'), "workgroup")
+        elif tag in tag_cache.get("projects", []):
+            members = nocodb.members(tag.lstrip('@'), "project")
+        elif tag in tag_cache.get("roles", []):
+            members = nocodb.members(tag.lstrip('@'), "role")
+        else:
+            members = None
+
+        if members:
+            tag_list = ' '.join(members)
+            await msg.reply_html(f"<b>{tag}</b>:\n{tag_list}")
 
 async def ps(application: Application) -> None:
     # Set bot commands for the Telegram interface
@@ -218,6 +215,8 @@ def main() -> None:
     application.add_handler(CommandHandler("inlab", inlab))
     application.add_handler(CommandHandler("ore", ore))
     application.add_handler(CommandHandler("tags", tags))
+    
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, mention_handler))
 
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
@@ -229,6 +228,12 @@ if __name__ == "__main__":
     
     nocodb = NocoDB(NOCO_URL, NOCO_API_KEY)
     eagle_api = EagleAPI(EAGLE_API_URL)
+    tag_cache = {
+        "areas": nocodb.area_tags(),
+        "workgroups": nocodb.workgroup_tags(),
+        "projects": nocodb.project_tags(),
+        "roles": nocodb.role_tags()
+    }
 
     main()
     logging.info("T.E.C.S. ended")
