@@ -6,7 +6,8 @@ from pony.orm import Database, Required, Optional, Set  # Pony ORM constructs
 
 # Create a Database object connected to a SQLite file.
 # The path "/data/eagletrtbot.db" is the file location and create_db=True ensures the file is created if missing.
-db = Database("sqlite", "/data/eagletrtbot.db", create_db=True)
+db = Database()
+db.bind(provider="sqlite", filename="../data/eagletrtbot.db", create_db=True)
 
 class Task(db.Entity):
     # A Task entity/table with columns defined below.
@@ -33,7 +34,8 @@ class ODG(db.Entity):
         # Tasks are ordered by their creation timestamp.
         if self.tasks.is_empty():
             return "ODG list is empty."
-        return "\n\n".join(str(task) for task in self.tasks.order_by(Task.created_at))
+        # Correzione: converte il risultato in una lista per renderlo iterabile
+        return "\n\n".join(str(task) for task in list(self.tasks.order_by(Task.created_at)))
 
     def reset(self):
         # Remove all tasks associated with this ODG.
@@ -46,7 +48,7 @@ class ODG(db.Entity):
         # Remove a single task by its index in the ordered-by-created_at list.
         # Uses Pony's limit(offset=...) to select the task at the given zero-based index.
         # Returns True if a task was found and deleted, False otherwise.
-        task = self.tasks.order_by(Task.created_at).limit(1, offset=task_idx)
+        task = list(self.tasks.order_by(Task.created_at).limit(1, offset=task_idx))
         if task:
             task[0].delete()
             return True
