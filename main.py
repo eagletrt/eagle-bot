@@ -8,8 +8,6 @@ from telegram import Update, BotCommand
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 import re
 
-# FIXME: handle message modifications and deletions
-
 # Environment variables
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN") # Telegram bot token
 NOCO_URL = os.getenv("NOCO_URL")  # e.g. localhost:8080
@@ -62,6 +60,10 @@ file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(messa
 logging.basicConfig(level=logging.INFO, handlers=[console_handler, file_handler])
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    
+    if update.edited_message or update.message_reaction:
+        return
+    
     user = update.effective_user
     await update.message.reply_html(
         rf"Hi {user.mention_html()}!"
@@ -69,6 +71,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     logging.info(f"/start requested by @{user.username}")
 
 async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    
+    if update.edited_message or update.message_reaction:
+        return
+
     chat_id = update.effective_chat.id
     thread_id = update.effective_message.message_thread_id
     text = update.message.text
@@ -98,13 +104,17 @@ async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 created_by=(getattr(update.effective_user, "first_name", "") or "") + " " + (getattr(update.effective_user, "last_name", "") or ""),
                 odg=odg
             )
-            return await update.message.set_reaction("✍️")
+            return await update.message.set_reaction("✍")
         else:
             return await update.message.reply_html(
                 f"📝 <b>Todo List</b>\n\n{odg}"
             )
 
 async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+    if update.edited_message or update.message_reaction:
+        return
+
     inlab = eagle_api.inlab()
     tags = [
         nocodb.username_from_email(email)
@@ -121,6 +131,10 @@ async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     logging.info(f"/inlab requested by @{user}")
 
 async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+    if update.edited_message or update.message_reaction:
+        return
+
     username = update.effective_user.username
 
     if not username:
@@ -149,6 +163,10 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     logging.info(f"/ore requested by @{username}")
 
 async def tags(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+    if update.edited_message or update.message_reaction:
+        return
+
     await update.message.reply_html(
         "#️⃣ <b>Tag List</b>\n\n"
         f"<b>Areas</b>\n{', '.join(tag_cache['areas'])}\n\n"
@@ -161,6 +179,10 @@ async def tags(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     logging.info(f"/tags requested by @{user}")
 
 async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+    if update.edited_message or update.message_reaction:
+        return
+
     msg = update.message
     if not msg or not msg.text:
         return
@@ -171,7 +193,9 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return
 
     for tag in found_tags:
-        if tag in tag_cache.get("areas", []):
+        if tag == "@inlab":
+            return await inlab(update, context)
+        elif tag in tag_cache.get("areas", []):
             members = nocodb.members(tag.lstrip('@'), "area")
         elif tag in tag_cache.get("workgroups", []):
             members = nocodb.members(tag.lstrip('@'), "workgroup")
