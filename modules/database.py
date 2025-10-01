@@ -7,7 +7,7 @@ from pony.orm import Database, Required, Optional, Set  # Pony ORM constructs
 # Create a Database object connected to a SQLite file.
 # The path "/data/eagletrtbot.db" is the file location and create_db=True ensures the file is created if missing.
 db = Database()
-db.bind(provider="sqlite", filename="../data/eagletrtbot.db", create_db=True)
+db.bind(provider="sqlite", filename="/data/eagletrtbot.db", create_db=True)
 
 class Task(db.Entity):
     # A Task entity/table with columns defined below.

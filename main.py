@@ -55,7 +55,7 @@ class BracketColorFormatter(ColorFormatter):
 console_handler = logging.StreamHandler()
 console_handler.setFormatter(BracketColorFormatter("%(asctime)s [%(levelname)s] %(message)s"))
 
-file_handler = logging.FileHandler("./data/bot.log", mode="a", encoding="utf-8")
+file_handler = logging.FileHandler("/data/bot.log", mode="a", encoding="utf-8")
 file_handler.setLevel(logging.WARNING)
 file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
 
