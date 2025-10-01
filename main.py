@@ -68,7 +68,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
     logging.info(f"/start requested by @{user.username}")
 
-# FIXME: React to the message (not send)
 async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     chat_id = update.effective_chat.id
     thread_id = update.effective_message.message_thread_id
@@ -82,7 +81,7 @@ async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         if update.message.text.startswith("/odg reset"):
             odg.reset()
-            return await update.message.reply_text("👍", reply_to_message_id=update.message.message_id)
+            return await update.message.set_reaction("👍")
         elif update.message.text.startswith("/odg remove"):
             try:
                 task_id = int(update.message.text.split(' ', 2)[2])
@@ -90,7 +89,7 @@ async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 return await update.message.reply_text("Task ID must be a number.")
             
             if odg.remove_task(task_id-1):
-                return await update.message.reply_text("👍", reply_to_message_id=update.message.message_id)
+                return await update.message.set_reaction("👍")
             else:
                 return await update.message.reply_text(f"Task #{task_id} not found in the todo list.")
         elif update.message.text.startswith("/odg "):
@@ -99,7 +98,7 @@ async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 created_by=(getattr(update.effective_user, "first_name", "") or "") + " " + (getattr(update.effective_user, "last_name", "") or ""),
                 odg=odg
             )
-            return await update.message.reply_text("✍️", reply_to_message_id=update.message.message_id)
+            return await update.message.set_reaction("✍️")
         else:
             return await update.message.reply_html(
                 f"📝 <b>Todo List</b>\n\n{odg}"
