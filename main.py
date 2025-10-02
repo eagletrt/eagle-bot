@@ -290,7 +290,7 @@ def main() -> None:
 if __name__ == "__main__":
     # Validate presence of required environment variables. If any missing, log and exit.
     if not NOCO_URL or not NOCO_API_KEY or not EAGLE_API_URL or not TOKEN:
-        logging.error("Missing required environment variables: NOCO_URL, NOCO_API_KEY, BASE_ID, EAGLE_API_URL")
+        logging.error("Missing required environment variables: NOCO_URL, NOCO_API_KEY, EAGLE_API_URL, TELEGRAM_BOT_TOKEN")
         exit(1)
     
     # Initialize NocoDB and Eagle clients for use by handlers
