@@ -11,11 +11,11 @@ class EagleAPI:
         })
 
     def oreLab(self, username: str) -> dict:
-        res = self._session.get(f"{self.base_url}/api/v2/lab/ore", params={
+        res = self._session.get(f"{self.base_url}/lab/ore", params={
             "username": username
         })
         return res.json()
 
     def inlab(self) -> dict:
-        res = self._session.get(f"{self.base_url}/api/v2/lab/inlab")
+        res = self._session.get(f"{self.base_url}/lab/inlab")
         return res.json()
