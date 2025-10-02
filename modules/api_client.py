@@ -2,7 +2,7 @@
 API client for interacting with Eagle's lab endpoints.
 
 This module defines a small wrapper around requests.Session to call
-two endpoints: /api/v2/lab/ore and /api/v2/lab/inlab.
+two endpoints: /lab/ore and /lab/inlab.
 """
 
 import requests
