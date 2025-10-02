@@ -31,7 +31,7 @@ class EagleAPI:
         """
         Call the ore lab endpoint for a given username.
 
-        Performs a GET request to: {base_url}/api/v2/lab/ore
+        Performs a GET request to: {base_url}/lab/ore
         Query parameters:
             - username: the username to query
 
@@ -43,7 +43,7 @@ class EagleAPI:
             - If the response body is not valid JSON, res.json() will raise a ValueError.
         """
         # Perform the GET request with the username as a query parameter
-        res = self._session.get(f"{self.base_url}/api/v2/lab/ore", params={
+        res = self._session.get(f"{self.base_url}/lab/ore", params={
             "username": username
         })
 
@@ -54,7 +54,7 @@ class EagleAPI:
         """
         Call the inlab endpoint.
 
-        Performs a GET request to: {base_url}/api/v2/lab/inlab
+        Performs a GET request to: {base_url}/lab/inlab
 
         Returns:
             dict: Parsed JSON response from the server.
@@ -63,7 +63,7 @@ class EagleAPI:
             - Same exception behavior as oreLab regarding network/JSON errors.
         """
         # Call the endpoint without query parameters
-        res = self._session.get(f"{self.base_url}/api/v2/lab/inlab")
+        res = self._session.get(f"{self.base_url}/lab/inlab")
 
         # Return parsed JSON result
         return res.json()
