@@ -34,7 +34,7 @@ class ODG(db.Entity):
         # Tasks are ordered by their creation timestamp.
         if self.tasks.is_empty():
             return "ODG list is empty."
-        # Correzione: converte il risultato in una lista per renderlo iterabile
+        # Fix: convert result to list to make it iterable
         return "\n\n".join(str(task) for task in list(self.tasks.order_by(Task.created_at)))
 
     def reset(self):
