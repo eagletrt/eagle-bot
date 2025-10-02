@@ -1,5 +1,21 @@
+#misc
 .DS_Store
-.idea/
-.venv/
+*.env
+
+#Remove under working files
+*.dis
+
+#Python log
+*.log
+data/
+
+#Python venv
+myenv/
+venv/
 __pycache__/
-*.db
+
+# VsCode workspace
+*.code-workspace
+
+# PyCharm workspace
+.idea/
