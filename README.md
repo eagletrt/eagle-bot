@@ -1,116 +1,116 @@
 # T.E.C.S. - 3.0
 
-**eagle-bot** è un bot Telegram progettato per il team E-Agle TRT, che integra funzionalità di gestione attività, interazione con database NocoDB, e interrogazione di API interne per monitorare la presenza in laboratorio e le ore di permanenza.
+**eagle-bot** is a Telegram bot designed for the EagleTRT team. It integrates task management, interaction with a NocoDB database, and internal API queries to monitor lab presence and time spent.
 
-## Funzionalità principali
+## Main features
 
-- **Gestione ODG (Ordine del Giorno):** aggiunta, rimozione, reset e visualizzazione di una lista di attività condivisa per chat/thread.
-- **Integrazione con NocoDB:** recupero di tag (aree, gruppi di lavoro, progetti, ruoli) e membri associati tramite API REST.
-- **Interazione con API Eagle:** visualizzazione delle persone attualmente in laboratorio e delle ore trascorse da ciascun membro.
-- **Risposta a menzioni:** menzionando un tag (es. `@mt`) il bot risponde con la lista dei membri associati.
-- **Log dettagliato:** log su file e console, con colorazione dei livelli di log.
+- **ODG (Agenda) management:** Add, remove, reset, and view a shared task list per chat/thread.
+- **NocoDB integration:** Retrieve tags (areas, workgroups, projects, roles) and members associated with tags via the REST API.
+- **Eagle API interaction:** Display people currently in the lab and the hours each member has spent.
+- **Reply to mentions:** Mentioning a tag (e.g. `@sw`) the bot replies with the list of associated members.
+- **Detailed logging:** Logs to file and console, with colored log levels.
 
-## Struttura dei file principali
+## Main file structure
 
 - [`main.py`](main.py):  
-  Entrypoint del bot. Gestisce la configurazione, l'avvio, la registrazione degli handler dei comandi e delle menzioni, e l'inizializzazione dei client per NocoDB e E-Agle API.
+  Bot entrypoint. Handles configuration, startup, registering command and mention handlers, and initializing clients for NocoDB and the Eagle API.
 
 - [`modules/nocodb.py`](modules/nocodb.py):  
-  Wrapper leggero per l'API REST di NocoDB. Permette di recuperare tag, membri associati a tag, e di mappare username Telegram ↔ email di team.
+  Lightweight wrapper for the NocoDB REST API. Allows fetching tags, members associated with a tag, and mapping Telegram usernames ↔ team emails.
 
 - [`modules/api_client.py`](modules/api_client.py):  
-  Client per le API di E-Agle (endpoints `/lab/ore` e `/lab/inlab`). Permette di ottenere la lista delle persone in laboratorio e le ore di presenza.
+  Client for the Eagle API (endpoints `/lab/ore` and `/lab/inlab`). Allows obtaining the list of people in the lab and presence hours.
 
 - [`modules/database.py`](modules/database.py):  
-  Modulo ORM (Pony ORM) per la gestione locale delle attività (Task) e delle liste ODG, persistite su SQLite (`data/eagletrtbot.db`).
+  ORM module (Pony ORM) for local management of tasks (Task) and ODG lists, persisted to SQLite (`/data/eagletrtbot.db`).
 
 - [`docker-compose.yml`](docker-compose.yml) & [`Dockerfile`](Dockerfile):  
-  Permettono l’esecuzione del bot in ambiente Docker, con persistenza dei dati e configurazione tramite variabili d’ambiente.
+  Enable running the bot in Docker with persistent data and configuration via environment variables.
 
 - [`requirements.txt`](requirements.txt):  
-  Elenco delle dipendenze Python necessarie: `python-telegram-bot`, `requests`, `pony`.
+  List of required Python dependencies: `python-telegram-bot`, `requests`, `pony`.
 
-## Variabili d’ambiente richieste
+## Required environment variables
 
-- `TELEGRAM_BOT_TOKEN`: token del bot Telegram.
-- `NOCO_URL`: URL base dell’istanza NocoDB.
-- `NOCO_API_KEY`: API key per autenticazione NocoDB.
-- `EAGLE_API_URL`: URL base delle API E-Agle.
+- `TELEGRAM_BOT_TOKEN`: Telegram bot token.
+- `NOCO_URL`: Base URL of the NocoDB instance.
+- `NOCO_API_KEY`: API key for NocoDB authentication.
+- `EAGLE_API_URL`: Base URL of the Eagle API.
 
-## Avvio rapido (per sviluppo locale)
+## Quick start (for local development)
 
-1. **Configurazione variabili d’ambiente:**  
-   Impostare le variabili richieste (vedi sopra).
+1. **Configure environment variables:**  
+   Set the required variables (see above).
 
-2. **Installazione dipendenze:**  
-   Eseguire `pip install -r requirements.txt` per installare le dipendenze Python.
+2. **Install dependencies:**  
+   Run `pip install -r requirements.txt` to install Python dependencies.
 
-3. **Avvio del bot:**  
-   Eseguire `python main.py` per avviare il bot.
+3. **Start the bot:**  
+   Run `python main.py` to start the bot.
 
-## Avvio con Docker
+## Running with Docker
 
-1. **Configurazione variabili d’ambiente:**  
-   Aggiornare il file `docker-compose.yml` con le variabili richieste.
+1. **Configure environment variables:**  
+   Update `docker-compose.yml` with the required variables.
 
-2. **Costruzione ed esecuzione del container:**
-    Eseguire `docker-compose up --build -d` per costruire ed avviare il container in background.
+2. **Build and run the container:**  
+   Run `docker-compose up --build -d` to build and start the container in the background.
 
-## Log
+## Logs
 
-- I log vengono salvati in `data/bot.log` con livello WARNING e superiori.
-- I log di livello INFO e superiori vengono mostrati in console con colorazione.
+- Logs are saved to `/data/bot.log` with level WARNING and above.
+- INFO and above are shown in the console with colored output.
 
-## Database ODG
+## ODG Database
 
-- Il database SQLite `data/eagletrtbot.db` viene creato automaticamente alla prima esecuzione.
-- Contiene le tabelle `Task` e `OdgList` per la gestione delle attività.
+- The SQLite database `/data/eagletrtbot.db` is created automatically on first run.
+- It contains the `Task` and `OdgList` tables for managing tasks.
 
-## Esempi di utilizzo
+## Usage examples
 
-- **Aggiungere una task all'ODG:**
+- **Add a task to the ODG:**
 
   ```
   /odg <task>
   ```
 
-- **Rimuovere una task dall'ODG:**
+- **Remove a task from the ODG:**
 
   ```
-  /odg remove <numero_task>
+  /odg <task_number>
   ```
 
-- **Resettare l'ODG:**
+- **Reset the ODG:**
 
   ```
   /odg reset
   ```
 
-- **Visualizzare l'ODG:**
+- **Show the ODG:**
 
   ```
   /odg
   ```
 
-- **Visualizzare i tag disponibili:**
+- **Show available tags:**
 
   ```
   /tags
   ```
 
-- **Visualizzare membri di un'area/workgroup/progetto/ruolo/inlab:**
+- **Show members of an area/workgroup/project/role/inlab:**
 
   ```
   @sw @rt @cr @tl @inlab
   ```
 
-- **Visualizzare persone in laboratorio:**
+- **Show people currently in the lab:**
 
   ```
   /inlab
   ```
 
-- **Visualizzare ore di presenza in lab del mese:**
+- **Show monthly lab presence hours:**
   ```
   /ore
   ```
