@@ -31,6 +31,30 @@ class NocoDB:
     The client sets a JSON content type header and reuses a requests.Session.
     """
 
+    # mapping of kind to table/link/view IDs for member lookups
+    mapping = {
+        "area": {
+            "table": "mbftgdmmi4t668c",
+            "link": "cjest7m9j409yia",
+            "view": "vw72nyx0bmaak96s"
+        },
+        "workgroup": {
+            "table": "m5gpr28sp047j7w",
+            "link": "c4olgvricf9nalu",
+            "view": "vw72nyx0bmaak96s"
+        },
+        "project": {
+            "table": "ma3scczigje9u17",
+            "link": "c96a46tetiedgvg",
+            "view": "vw72nyx0bmaak96s"
+        },
+        "role": {
+            "table": "mpur65wgd6gqi98",
+            "link": "cbuvnbm0wxwkfyo",
+            "view": "vw72nyx0bmaak96s"
+        }
+    }
+
     def __init__(self, base_url: str, api_key: str):
         # store base url without trailing slash to make URL composition predictable
         self.base_url = base_url.rstrip("/")
@@ -57,13 +81,16 @@ class NocoDB:
 
     # Convenience wrappers to preserve the original public API while reusing the generic helper
     def area_tags(self) -> list[str]:
-        return self._tags_for_table("mbftgdmmi4t668c")
+        return self._tags_for_table(self.mapping["area"]["table"])
+
     def workgroup_tags(self) -> list[str]:
-        return self._tags_for_table("m5gpr28sp047j7w")
+        return self._tags_for_table(self.mapping["workgroup"]["table"])
+
     def project_tags(self) -> list[str]:
-        return self._tags_for_table("ma3scczigje9u17")
+        return self._tags_for_table(self.mapping["project"]["table"])
+
     def role_tags(self) -> list[str]:
-        return self._tags_for_table("mpur65wgd6gqi98")
+        return self._tags_for_table(self.mapping["role"]["table"])
 
     def members(self, tag: str, kind: str) -> list[str]:
         """
@@ -77,33 +104,11 @@ class NocoDB:
         project_members and role_members implementations using an internal
         mapping of table/link/view IDs.
         """
-        mapping = {
-            "area": {
-                "table": "mbftgdmmi4t668c",
-                "link": "cjest7m9j409yia",
-                "view": "vw72nyx0bmaak96s"
-            },
-            "workgroup": {
-                "table": "m5gpr28sp047j7w",
-                "link": "c4olgvricf9nalu",
-                "view": "vw72nyx0bmaak96s"
-            },
-            "project": {
-                "table": "ma3scczigje9u17",
-                "link": "c96a46tetiedgvg",
-                "view": "vw72nyx0bmaak96s"
-            },
-            "role": {
-                "table": "mpur65wgd6gqi98",
-                "link": "cbuvnbm0wxwkfyo",
-                "view": "vw72nyx0bmaak96s"
-            }
-        }
 
-        if kind not in mapping:
+        if kind not in self.mapping:
             raise ValueError(f"unsupported kind: {kind}")
 
-        info = mapping[kind]
+        info = self.mapping[kind]
         # find the NocoDB internal Id for the record that matches the tag
         nocoid = self._session.get(
             f"{self.base_url}/api/v2/tables/{info['table']}/records",

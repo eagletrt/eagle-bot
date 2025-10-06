@@ -1,12 +1,12 @@
 # T.E.C.S. - 3.0
 
-**eagle-bot** is a Telegram bot designed for the EagleTRT team. It integrates task management, interaction with a NocoDB database, and internal API queries to monitor lab presence and time spent.
+**eagle-bot** is a Telegram bot designed for the E-Agle TRT team. It integrates task management, interaction with a NocoDB database, and internal API queries to monitor lab presence and time spent.
 
 ## Main features
 
 - **ODG (Agenda) management:** Add, remove, reset, and view a shared task list per chat/thread.
 - **NocoDB integration:** Retrieve tags (areas, workgroups, projects, roles) and members associated with tags via the REST API.
-- **Eagle API interaction:** Display people currently in the lab and the hours each member has spent.
+- **E-Agle API interaction:** Display people currently in the lab and the hours each member has spent.
 - **Reply to mentions:** Mentioning a tag (e.g. `@sw`) the bot replies with the list of associated members.
 - **Detailed logging:** Logs to file and console, with colored log levels.
 
@@ -35,7 +35,7 @@
 - `TELEGRAM_BOT_TOKEN`: Telegram bot token.
 - `NOCO_URL`: Base URL of the NocoDB instance.
 - `NOCO_API_KEY`: API key for NocoDB authentication.
-- `EAGLE_API_URL`: Base URL of the Eagle API.
+- `EAGLE_API_URL`: Base URL of the E-Agle API.
 
 ## Quick start (for local development)
 

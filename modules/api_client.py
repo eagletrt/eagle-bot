@@ -1,11 +1,12 @@
 """
-API client for interacting with Eagle's lab endpoints.
+API client for interacting with E-Agle's lab endpoints.
 
 This module defines a small wrapper around requests.Session to call
 two endpoints: /lab/ore and /lab/inlab.
 """
 
 import requests
+
 
 class EagleAPI:
     """

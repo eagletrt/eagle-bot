@@ -9,6 +9,7 @@ from pony.orm import Database, Required, Optional, Set  # Pony ORM constructs
 db = Database()
 db.bind(provider="sqlite", filename="/data/eagletrtbot.db", create_db=True)
 
+
 class Task(db.Entity):
     # A Task entity/table with columns defined below.
     # 'Required' means the field is non-nullable in the DB; default values are applied when appropriate.
@@ -23,6 +24,7 @@ class Task(db.Entity):
         # Uses emoji to provide a compact display format.
         return f"📋 {self.text}\n👤 {self.created_by}"
 
+
 class ODG(db.Entity):
     # ODG entity/table representing a chat/thread context that can contain multiple Tasks.
     chatId = Required(int, sql_type='BIGINT', size=64)  # Chat identifier stored as big integer
@@ -34,8 +36,7 @@ class ODG(db.Entity):
         # Tasks are ordered by their creation timestamp.
         if self.tasks.is_empty():
             return "ODG list is empty."
-        # Fix: convert result to list to make it iterable
-        return "\n\n".join(str(task) for task in list(self.tasks.order_by(Task.created_at)))
+        return "\n\n".join(str(task) for task in self.tasks.order_by(Task.created_at))
 
     def reset(self):
         # Remove all tasks associated with this ODG.
@@ -53,6 +54,7 @@ class ODG(db.Entity):
             task[0].delete()
             return True
         return False
+
 
 # Generate mapping between the above entities and the actual database tables.
 # create_tables=True ensures tables are created in the database if they don't exist.
