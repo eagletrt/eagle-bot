@@ -3,8 +3,9 @@ import logging  # Standard logging
 from modules.nocodb import NocoDB  # Wrapper client for NocoDB (project-specific)
 from modules.api_client import EagleAPI  # Wrapper client for Eagle API (project-specific)
 from modules.database import ODG, Task  # ORM entities (using Pony ORM)
+from modules.quiz import Events, Quiz, Questions  # Wrapper for quiz database
 from pony.orm import db_session  # Pony ORM context manager for DB sessions
-from telegram import Update, BotCommand  # Telegram types
+from telegram import Update, BotCommand, InputMediaPhoto  # Telegram types
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters  # Telegram bot framework
 import re  # Regular expressions for mention parsing
 
@@ -258,6 +259,298 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             tag_list = ' '.join(members)
             await msg.reply_html(f"<b>{tag}</b>:\n{tag_list}")
 
+# Command handler: /quiz <id>
+# Fetches and displays details for a specific quiz. Access is restricted to whitelisted users.
+async def quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.edited_message or update.message_reaction:
+        return
+    
+    username = update.effective_user.username
+
+    # A Telegram username is required for the whitelist check
+    if not username:
+        return
+    
+    # Check if the user is in the whitelist file; if not, silently ignore the command.
+    try:
+        with open('/data/whitelist.txt', 'r', encoding='utf-8') as f:
+            whitelist = {line.strip() for line in f}
+        if username not in whitelist:
+            return
+    except FileNotFoundError:
+        logging.warning("Whitelist file not found at /data/whitelist.txt. /quiz locked.")
+        return
+    
+    text = update.message.text
+    # Remove bot mention if present and trim whitespace
+    text = text.replace("@eagletrtbot", "").strip()
+
+    # Extract quiz ID from the command text
+    id = text.split(' ', 1)[1] if ' ' in text else None
+
+    if not id:
+        await update.message.reply_text("Please provide a valid quiz ID.")
+        return
+    
+    # Fetch the quiz from the database and reply with its details
+    with db_session:
+        quiz = Quiz.get(quiz_id=id)
+        if not quiz:
+            await update.message.reply_text(f"No quiz found with ID {id}.")
+            return
+    
+    return await update.message.reply_html(
+        f"<b>Quiz ID {quiz.quiz_id}</b>\n"
+        f"Year: {quiz.year}\n"
+        f"Class: {quiz.class_}\n"
+        f"Date: {quiz.date}\n"
+        f"Information: {quiz.information}\n"
+    )
+
+# Command handler: /quizzes
+# Lists all available quizzes in the database. Access is restricted to whitelisted users.
+async def quizzes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.edited_message or update.message_reaction:
+        return
+    
+    username = update.effective_user.username
+
+    if not username:
+        return
+    
+    # Whitelist check
+    try:
+        with open('/data/whitelist.txt', 'r', encoding='utf-8') as f:
+            whitelist = {line.strip() for line in f}
+        if username not in whitelist:
+            return
+    except FileNotFoundError:
+        logging.warning("Whitelist file not found at /data/whitelist.txt. /quizzes locked.")
+        return
+    
+    # Fetch all quizzes and format them into a list for the reply
+    with db_session:
+        quizzes = list(Quiz.select())
+        if not quizzes:
+            await update.message.reply_text("No quizzes found.")
+            return
+    
+    quiz_texts = []
+    for quiz in quizzes:
+        quiz_texts.append(f"ID {quiz.quiz_id}: {quiz.year} - {quiz.class_}")
+    
+    return await update.message.reply_html(
+        f"<b>Available Quizzes:</b>\n" + "\n".join(quiz_texts)
+    )
+
+# Command handler: /event <id>
+# Fetches and displays details for a specific event. Access is restricted to whitelisted users.
+async def event(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.edited_message or update.message_reaction:
+        return
+    
+    username = update.effective_user.username
+
+    if not username:
+        return
+    
+    # Whitelist check
+    try:
+        with open('/data/whitelist.txt', 'r', encoding='utf-8') as f:
+            whitelist = {line.strip() for line in f}
+        if username not in whitelist:
+            return
+    except FileNotFoundError:
+        logging.warning("Whitelist file not found at /data/whitelist.txt. /event locked.")
+        return
+    
+    text = update.message.text
+    # Remove bot mention if present and trim whitespace
+    text = text.replace("@eagletrtbot", "").strip()
+    
+    # Extract event ID from the command text
+    id = text.split(' ', 1)[1] if ' ' in text else None
+
+    if not id:
+        await update.message.reply_text("Please provide a valid event ID.")
+        return
+    
+    # Fetch the event from the database and reply with its details
+    with db_session:
+        event = Events.get(event_id=id)
+        if not event:
+            await update.message.reply_text(f"No event found with ID {id}.")
+            return
+    
+    return await update.message.reply_html(
+        f"<b>Event ID {event.event_id} - {event.short_name}</b>\n"
+        f"Name: {event.event_name}\n"
+        f"Country: {event.country}\n"
+        f"Website: {event.website}"
+    )
+
+# Command handler: /events
+# Lists all available events in the database. Access is restricted to whitelisted users.
+async def events(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.edited_message or update.message_reaction:
+        return
+    
+    username = update.effective_user.username
+
+    if not username:
+        return
+    
+    # Whitelist check
+    try:
+        with open('/data/whitelist.txt', 'r', encoding='utf-8') as f:
+            whitelist = {line.strip() for line in f}
+        if username not in whitelist:
+            return
+    except FileNotFoundError:
+        logging.warning("Whitelist file not found at /data/whitelist.txt. /events locked.")
+        return
+    
+    # Fetch all events and format them into a list for the reply
+    with db_session:
+        event_list = list(Events.select())
+        if not event_list:
+            await update.message.reply_text("No events found.")
+            return
+    
+    event_texts = []
+    for event in event_list:
+        event_texts.append(f"ID {event.event_id}: {event.short_name} - {event.event_name}")
+    
+    return await update.message.reply_html(
+        f"<b>Available Events:</b>\n" + "\n".join(event_texts)
+    )
+
+# Command handler: /question [<id>]
+# Sends a quiz question as a poll. If no ID is given, a random question is chosen.
+# The ID format is <question_id>-<quiz_id>.
+async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.edited_message or update.message_reaction:
+        return
+    
+    text = update.message.text
+    # Remove bot mention if present and trim whitespace
+    text = text.replace("@eagletrtbot", "").strip()
+
+    # Extract question ID from the command text
+    id = text.split(' ', 1)[1] if ' ' in text else None
+
+    with db_session:
+        if not id:
+            # If no ID, fetch a random valid question.
+            # The loop ensures that a question with answers and images is selected.
+            question = Questions.select().random(1)[0]
+            while not question.isValid():
+                question = Questions.select().random(1)[0]
+        else:
+            # If an ID is provided, parse it and fetch the specific question.
+            if '-' not in id:
+                await update.message.reply_text("Please provide a valid question ID in the format <question_id>-<quiz_id>.")
+                return
+            
+            id_parts = id.split('-', 1)
+            question_id = id_parts[0]
+            quiz_id = id_parts[1]
+
+            question = Questions.get(id=question_id, quiz=quiz_id)
+            if not question or not question.isValid():
+                await update.message.reply_text(f"No valid question found for question ID {question_id} in quiz ID {quiz_id}.")
+                return
+
+        answers = list(question.answers)
+        images = list(question.images)
+    
+    qtext = f"Question {question.id}-{question.quiz.quiz_id} {question.type}"
+
+    options = [a.answer_text for a in answers]
+    correct_indices = [i for i, a in enumerate(answers) if a.is_correct]
+
+    if not options or not correct_indices:
+        await update.message.reply_text("No valid answers available for this question.")
+        return
+    
+    # Send question text and any associated images
+    if len(images) == 1:
+        await update.message.reply_photo(f"https://img.fs-quiz.eu/{images[0].path}", caption=f"{question.text}")
+    elif len(images) > 1:
+        media_group = [
+            InputMediaPhoto(media=f"https://img.fs-quiz.eu/{img.path}")
+            for img in images
+        ]
+        await update.message.reply_media_group(media=media_group)
+        await update.message.reply_text(f"{question.text}")
+    else:
+        await update.message.reply_text(f"{question.text}")
+
+    # Send the poll with the question options
+    return await update.message.reply_poll(
+        qtext,
+        options,
+        type="quiz",
+        correct_option_id=correct_indices[0],
+        is_anonymous=False,
+    )
+
+# Command handler: /answer <id>
+# Shows the correct answer(s) for a given question ID. Access is restricted to whitelisted users.
+async def answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if update.edited_message or update.message_reaction:
+        return
+
+    username = update.effective_user.username
+
+    if not username:
+        return
+    
+    # Whitelist check
+    try:
+        with open('/data/whitelist.txt', 'r', encoding='utf-8') as f:
+            whitelist = {line.strip() for line in f}
+        if username not in whitelist:
+            return
+    except FileNotFoundError:
+        logging.warning("Whitelist file not found at /data/whitelist.txt. /answer locked.")
+        return
+    
+    text = update.message.text
+    # Remove bot mention if present and trim whitespace
+    text = text.replace("@eagletrtbot", "").strip()
+
+    # Extract question ID from the command text
+    id = text.split(' ', 1)[1] if ' ' in text else None
+
+    if not id or '-' not in id:
+        await update.message.reply_text("Please provide a valid question ID in the format <question_id>-<quiz_id>.")
+        return
+    
+    id_parts = id.split('-', 1)
+    question_id = id_parts[0]
+    quiz_id = id_parts[1]
+
+    # Fetch the question and its answers from the database
+    with db_session:
+        question = Questions.get(id=question_id, quiz=quiz_id)
+        if not question:
+            await update.message.reply_text(f"No question found for question ID {question_id} in quiz ID {quiz_id}.")
+            return
+        answers = list(question.answers)
+        if not answers:
+            await update.message.reply_text(f"No answers found for question ID {question_id} in quiz ID {quiz_id}.")
+            return
+    
+    # Format the answers, indicating which are correct
+    answer_texts = []
+    for answer in answers:
+        correctness = "✅" if answer.is_correct else "❌"
+        answer_texts.append(f"{correctness} {answer.answer_text}")
+
+    return await update.message.reply_html(
+        f"<b>Answers for Question ID {question_id} in Quiz ID {quiz_id}:</b>\n" + "\n".join(answer_texts)
+    )
 
 # Post-init hook: ps(application)
 # Called after Application is built to set the bot's command list visible in Telegram clients.
@@ -268,9 +561,10 @@ async def ps(application: Application) -> None:
         BotCommand("inlab", "People currently in lab"),
         BotCommand("ore", "Your month's lab hours"),
         BotCommand("tags", "List available tags"),
+        # Quiz-related commands (restricted)
+        BotCommand("question", "Get a random question"),
     ]
     await application.bot.set_my_commands(commands)
-
 
 # Main entrypoint that constructs and runs the Telegram Application (bot).
 def main() -> None:
@@ -289,6 +583,14 @@ def main() -> None:
     application.add_handler(CommandHandler("inlab", inlab))
     application.add_handler(CommandHandler("ore", ore))
     application.add_handler(CommandHandler("tags", tags))
+
+    # Quiz-related command handlers
+    application.add_handler(CommandHandler("quiz", quiz))
+    application.add_handler(CommandHandler("quizzes", quizzes))
+    application.add_handler(CommandHandler("event", event))
+    application.add_handler(CommandHandler("events", events))
+    application.add_handler(CommandHandler("question", question))
+    application.add_handler(CommandHandler("answer", answer))
 
     # Message handler for text messages that are not commands (to detect @mentions)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, mention_handler))
