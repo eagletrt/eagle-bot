@@ -5,7 +5,7 @@
 #Remove under working files
 *.dis
 
-#Python log
+#Bot data files
 data/
 
 #Python venv
