@@ -15,6 +15,7 @@ __pycache__/
 
 # VsCode workspace
 *.code-workspace
+.vscode/
 
 # PyCharm workspace
 .idea/
