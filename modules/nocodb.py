@@ -1,31 +1,17 @@
 import requests
+import tomllib
+import logging
+
+# Load configuration from config.ini
+with open("data/config.ini", "rb") as f:
+    try:
+        config = tomllib.load(f)
+    except tomllib.TOMLDecodeError as e:
+        logging.error(f"modules/nocodb - Error parsing data/config.ini: {e}")
+        exit(1)
 
 class NocoDB:
     """ Minimal client for querying specific tables in a NocoDB instance. """
-
-    # mapping of kind to table/link/view IDs for member lookups
-    mapping = {
-        "area": {
-            "table": "mbftgdmmi4t668c",
-            "link": "cjest7m9j409yia",
-            "view": "vw72nyx0bmaak96s"
-        },
-        "workgroup": {
-            "table": "m5gpr28sp047j7w",
-            "link": "c4olgvricf9nalu",
-            "view": "vw72nyx0bmaak96s"
-        },
-        "project": {
-            "table": "ma3scczigje9u17",
-            "link": "c96a46tetiedgvg",
-            "view": "vw72nyx0bmaak96s"
-        },
-        "role": {
-            "table": "mpur65wgd6gqi98",
-            "link": "cbuvnbm0wxwkfyo",
-            "view": "vw72nyx0bmaak96s"
-        }
-    }
 
     def __init__(self, base_url: str, api_key: str):
         """ Initialize the NocoDB client with base URL and API key. """
@@ -41,46 +27,29 @@ class NocoDB:
             'Content-Type': 'application/json'
         })
 
-    def _tags_for_table(self, table_id: str) -> list[str]:
-        """ Generic helper to fetch Tag values from a given table and format them as "@tag". """
+    def tags(self, kind: str) -> list[str]:
+        """ Return all tags for the given kind. """
 
+        # fetch all records from the relevant table, requesting only the Tag field
         res = self._session.get(
-            f"{self.base_url}/api/v2/tables/{table_id}/records",
+            f"{self.base_url}/api/v2/tables/{config['NocoDB'][kind]['table']}/records",
             params={"limit": 1000, "fields": "Tag"}
         )
         items = res.json().get("list")
         return [f"@{item['Tag'].lower().strip()}" for item in items]
 
-    # Convenience wrappers to preserve the original public API while reusing the generic helper
-    def area_tags(self) -> list[str]:
-        return self._tags_for_table(self.mapping["area"]["table"])
-
-    def workgroup_tags(self) -> list[str]:
-        return self._tags_for_table(self.mapping["workgroup"]["table"])
-
-    def project_tags(self) -> list[str]:
-        return self._tags_for_table(self.mapping["project"]["table"])
-
-    def role_tags(self) -> list[str]:
-        return self._tags_for_table(self.mapping["role"]["table"])
-
     def members(self, tag: str, kind: str) -> list[str]:
         """ Return Telegram usernames for the given tag and kind. """
 
-        if kind not in self.mapping:
-            raise ValueError(f"unsupported kind: {kind}")
-
-        info = self.mapping[kind]
-
         # find the NocoDB internal Id for the record that matches the tag
         nocoid = self._session.get(
-            f"{self.base_url}/api/v2/tables/{info['table']}/records",
+            f"{self.base_url}/api/v2/tables/{config['NocoDB'][kind]['table']}/records",
             params={"limit": 1000, "where": f"(Tag,like,{tag})", "fields": "Id"}
         ).json().get("list")[0].get("Id")
 
         # fetch linked member records for that record via the link endpoint
         res = self._session.get(
-            f"{self.base_url}/api/v2/tables/{info['table']}/links/{info['link']}/records/{nocoid}",
+            f"{self.base_url}/api/v2/tables/{config['NocoDB'][kind]['table']}/links/{config['NocoDB'][kind]['link']}/records/{nocoid}",
             params={"limit": 1000}
         ).json().get("list")
 
@@ -90,13 +59,12 @@ class NocoDB:
         params = {
             "limit": 1000,
             "where": f"(Id,in,{','.join(member_ids)})",
-            "fields": "Telegram Username"
+            "fields": "Telegram Username",
+            "viewId": config['NocoDB']['members']["view"] # use view to filter out inactive members
         }
-        if info.get("view"):
-            params["viewId"] = info["view"]
 
         res = self._session.get(
-            f"{self.base_url}/api/v2/tables/m3rsrrmnhhxxw0p/records",
+            f"{self.base_url}/api/v2/tables/{config['NocoDB']['members']['table']}/records",
             params=params
         )
 
@@ -107,7 +75,7 @@ class NocoDB:
         """ Lookup the Team Email for a given Telegram username. """
 
         res = self._session.get(
-            f"{self.base_url}/api/v2/tables/m3rsrrmnhhxxw0p/records",
+            f"{self.base_url}/api/v2/tables/{config['NocoDB']['members']['table']}/records",
             params={
                 "limit": 1000,
                 "where": f"(Telegram Username,like,@{username})~or(Telegram Username,like,{username})",
@@ -123,7 +91,7 @@ class NocoDB:
         """ Lookup the Telegram Username for a given Team Email. """
 
         res = self._session.get(
-            f"{self.base_url}/api/v2/tables/m3rsrrmnhhxxw0p/records",
+            f"{self.base_url}/api/v2/tables/{config['NocoDB']['members']['table']}/records",
             params={
                 "limit": 1000,
                 "where": f"(Team Email,eq,{email})",

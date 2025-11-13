@@ -100,15 +100,10 @@ def main() -> None:
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("telegram").setLevel(logging.WARNING)
 
-    # Environment variables expected by the bot:
-    TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-    NOCO_API_KEY = os.getenv("NOCO_API_KEY")
-    NOCO_URL = os.getenv("NOCO_URL")
-    EAGLE_API_URL = os.getenv("EAGLE_API_URL")
 
     application = (
         Application.builder()
-        .token(TOKEN)
+        .token(os.getenv("TELEGRAM_BOT_TOKEN"))
         .post_init(ps)
         .read_timeout(30)
         .write_timeout(30)
@@ -118,13 +113,13 @@ def main() -> None:
     logging.info("main/main - T.E.C.S. started")
 
     # Initialize clients and caches
-    nocodb = NocoDB(NOCO_URL, NOCO_API_KEY)
-    eagle_api = EagleAPI(EAGLE_API_URL)
+    nocodb = NocoDB(config['Settings']['NOCO_URL'], os.getenv("NOCO_API_KEY"))
+    eagle_api = EagleAPI(config['Settings']['EAGLE_API_URL'])
     tag_cache = {
-        "areas": nocodb.area_tags(),
-        "workgroups": nocodb.workgroup_tags(),
-        "projects": nocodb.project_tags(),
-        "roles": nocodb.role_tags(),
+        "areas": nocodb.tags('area'),
+        "workgroups": nocodb.tags('workgroup'),
+        "projects": nocodb.tags('project'),
+        "roles": nocodb.tags('role'),
     }
 
     # Store clients and caches in bot_data for access in handlers
@@ -157,7 +152,7 @@ def main() -> None:
 
 if __name__ == "__main__":
     # Validate environment variables
-    required_vars = ["TELEGRAM_BOT_TOKEN", "NOCO_API_KEY", "NOCO_URL", "EAGLE_API_URL"]
+    required_vars = ["TELEGRAM_BOT_TOKEN", "NOCO_API_KEY"]
     missing_vars = [var for var in required_vars if not os.getenv(var)]
     if missing_vars:
         logging.error(f"main/main - Missing required environment variables: {', '.join(missing_vars)}")
