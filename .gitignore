@@ -6,7 +6,6 @@
 *.dis
 
 #Python log
-*.log
 data/
 
 #Python venv
