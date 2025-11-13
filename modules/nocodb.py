@@ -1,35 +1,7 @@
-"""
-nocodb.py
-
-Lightweight wrapper around a NocoDB instance used by the eagle-bot project.
-
-This module provides:
-- NocoDB: a small client that queries specific tables/links in a NocoDB API.
-- Methods to list tags (areas, workgroups, projects, roles).
-- Methods to resolve members for a given tag (returning Telegram usernames).
-- Helpers to map between Telegram username and team email.
-
-Notes:
-- Uses requests.Session for connection reuse and to set the 'xc-token' header for auth.
-- Assumes specific table IDs and link IDs hard-coded in the queries.
-- No advanced error handling is implemented — network or API errors will raise requests exceptions
-    or KeyError/IndexError if the API response shape differs.
-"""
-
 import requests
 
-
 class NocoDB:
-    """
-    Minimal client for querying specific tables in a NocoDB instance.
-
-    Parameters:
-    - base_url (str): Base URL of the NocoDB instance (e.g. "https://noco.example.com").
-                                    A trailing slash will be removed automatically.
-    - api_key (str): API key to be sent in the 'xc-token' header.
-
-    The client sets a JSON content type header and reuses a requests.Session.
-    """
+    """ Minimal client for querying specific tables in a NocoDB instance. """
 
     # mapping of kind to table/link/view IDs for member lookups
     mapping = {
@@ -56,6 +28,8 @@ class NocoDB:
     }
 
     def __init__(self, base_url: str, api_key: str):
+        """ Initialize the NocoDB client with base URL and API key. """
+
         # store base url without trailing slash to make URL composition predictable
         self.base_url = base_url.rstrip("/")
 
@@ -64,14 +38,12 @@ class NocoDB:
         self._session.headers.update({
             # NocoDB expects the API key in the 'xc-token' header
             'xc-token': api_key,
-            # we're fetching JSON resources
             'Content-Type': 'application/json'
         })
 
     def _tags_for_table(self, table_id: str) -> list[str]:
-        """
-        Generic helper to fetch Tag values from a given table and format them as "@tag".
-        """
+        """ Generic helper to fetch Tag values from a given table and format them as "@tag". """
+
         res = self._session.get(
             f"{self.base_url}/api/v2/tables/{table_id}/records",
             params={"limit": 1000, "fields": "Tag"}
@@ -93,22 +65,13 @@ class NocoDB:
         return self._tags_for_table(self.mapping["role"]["table"])
 
     def members(self, tag: str, kind: str) -> list[str]:
-        """
-        Return Telegram usernames for the given tag and kind.
-
-        Parameters:
-        - tag: the tag string to look up (same format as used previously, e.g. "@area")
-        - kind: one of "area", "workgroup", "project", "role"
-
-        The function unifies the previous area_members, workgroup_members,
-        project_members and role_members implementations using an internal
-        mapping of table/link/view IDs.
-        """
+        """ Return Telegram usernames for the given tag and kind. """
 
         if kind not in self.mapping:
             raise ValueError(f"unsupported kind: {kind}")
 
         info = self.mapping[kind]
+
         # find the NocoDB internal Id for the record that matches the tag
         nocoid = self._session.get(
             f"{self.base_url}/api/v2/tables/{info['table']}/records",
@@ -141,20 +104,8 @@ class NocoDB:
         return [item["Telegram Username"] for item in items if item.get("Telegram Username")]
 
     def email_from_username(self, username: str) -> str:
-        """
-        Lookup the Team Email for a given Telegram username.
+        """ Lookup the Team Email for a given Telegram username. """
 
-        The 'where' clause attempts two matches:
-        - Telegram Username like @username
-        - Telegram Username like username
-
-        Returns:
-        - Team Email string if found.
-        - None if no matching record exists.
-
-        Note:
-        - The method returns None when no items are found, otherwise it returns a string.
-        """
         res = self._session.get(
             f"{self.base_url}/api/v2/tables/m3rsrrmnhhxxw0p/records",
             params={
@@ -164,17 +115,13 @@ class NocoDB:
             }
         )
         items = res.json().get("list")
+
         # if items found return Team Email (or empty string if field missing), else None
         return items[0].get("Team Email", "") if items else None
 
     def username_from_email(self, email: str) -> str:
-        """
-        Lookup the Telegram Username for a given Team Email.
+        """ Lookup the Telegram Username for a given Team Email. """
 
-        Returns:
-        - Telegram Username string if found.
-        - None if no matching record exists (function returns None when items list is empty).
-        """
         res = self._session.get(
             f"{self.base_url}/api/v2/tables/m3rsrrmnhhxxw0p/records",
             params={
