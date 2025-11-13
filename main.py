@@ -100,7 +100,6 @@ def main() -> None:
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("telegram").setLevel(logging.WARNING)
 
-
     application = (
         Application.builder()
         .token(os.getenv("TELEGRAM_BOT_TOKEN"))
