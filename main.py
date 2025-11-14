@@ -104,11 +104,13 @@ def main() -> None:
     if missing_vars:
         if "TELEGRAM_BOT_TOKEN" in missing_vars:
             logging.error("main/main - TELEGRAM_BOT_TOKEN environment variable is required but not set.")
+            exit(1)
         if "NOCO_API_KEY" in missing_vars and config['Features']['NocoDBIntegration']:
             logging.error("main/main - NOCO_API_KEY environment variable is required but not set.")
+            exit(1)
         if "SHLINK_API_KEY" in missing_vars and config['Features']['QRcodeGenerator']:
             logging.error("main/main - SHLINK_API_KEY environment variable is required but not set.")
-        exit(1)
+            exit(1)
 
     # Configure logging from config file
     log_level_console = config["Settings"]["ConsoleLogLevel"]
