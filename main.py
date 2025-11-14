@@ -56,12 +56,22 @@ logging.basicConfig(level=logging.INFO, handlers=[console_handler])
 async def ps(application: Application) -> None:
     """Post-initialization hook to set bot commands."""
 
-    commands = [
-        BotCommand("odg", "Show ODG"),
-        BotCommand("inlab", "People currently in lab"),
-        BotCommand("ore", "Your month's lab hours"),
-        BotCommand("tags", "List available tags"),
-    ]
+    commands = []
+
+    # Conditional addition of mention handler command
+    if application.bot_data["config"]['Features']['MentionHandler']:
+        commands.append(BotCommand("tags", "List available tags"))
+
+    # Conditional addition of ODG command
+    if application.bot_data["config"]['Features']['ODGCommand']:
+        commands.append(BotCommand("odg", "Show ODG"))
+
+    # Conditional addition of Eagle API commands
+    if application.bot_data["config"]['Features']['EAgleAPIIntegration']:
+        commands.extend([
+            BotCommand("inlab", "People currently in lab"),
+            BotCommand("ore", "Your month's lab hours"),
+        ])
 
     # Conditional addition of quiz commands
     if application.bot_data["config"]['Features']['FSQuiz']:
@@ -81,6 +91,16 @@ def main() -> None:
         except tomllib.TOMLDecodeError as e:
             logging.error(f"main/main - Error parsing data/config.ini: {e}")
             exit(1)
+
+    # Validate environment variables
+    required_vars = ["TELEGRAM_BOT_TOKEN", "NOCO_API_KEY"]
+    missing_vars = [var for var in required_vars if not os.getenv(var)]
+    if missing_vars:
+        if "TELEGRAM_BOT_TOKEN" in missing_vars:
+            logging.error("main/main - TELEGRAM_BOT_TOKEN environment variable is required but not set.")
+        if "NOCO_API_KEY" in missing_vars and config['Features']['NocoDBIntegration']:
+            logging.error("main/main - NOCO_API_KEY environment variable is required but not set.")
+        exit(1)
 
     # Configure logging from config file
     log_level_console = config["Settings"]["ConsoleLogLevel"]
@@ -112,30 +132,43 @@ def main() -> None:
 
     logging.info("main/main - T.E.C.S. started")
 
-    # Initialize clients and caches
-    nocodb = NocoDB(config['Settings']['NOCO_URL'], os.getenv("NOCO_API_KEY"))
-    eagle_api = EagleAPI(config['Settings']['EAGLE_API_URL'])
-    tag_cache = {
-        "areas": nocodb.tags('area'),
-        "workgroups": nocodb.tags('workgroup'),
-        "projects": nocodb.tags('project'),
-        "roles": nocodb.tags('role'),
-    }
-
-    # Store clients and caches in bot_data for access in handlers
-    application.bot_data["nocodb"] = nocodb
-    application.bot_data["eagle_api"] = eagle_api
-    application.bot_data["tag_cache"] = tag_cache
+    # Store config in bot_data for global access
     application.bot_data["config"] = config
-    logging.info("main/main - Clients and tag cache initialized and stored in bot_data.")
+
+    # Initialize NocoDB client if enabled
+    if config['Features']['NocoDBIntegration']:
+        nocodb = NocoDB(config['Settings']['NOCO_URL'], os.getenv("NOCO_API_KEY"))
+        application.bot_data["nocodb"] = nocodb
+        logging.info("main/main - NocoDB integration enabled.")
 
     # Register handlers
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("odg", odg))
-    application.add_handler(CommandHandler("inlab", inlab))
-    application.add_handler(CommandHandler("ore", ore))
-    application.add_handler(CommandHandler("tags", tags))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, mention_handler))
+
+    # Conditional registration of mention handler and /tags command
+    if config['Features']['MentionHandler'] and config['Features']['NocoDBIntegration']:
+        tag_cache = {
+            "areas": nocodb.tags('area'),
+            "workgroups": nocodb.tags('workgroup'),
+            "projects": nocodb.tags('project'),
+            "roles": nocodb.tags('role'),
+        }
+        application.bot_data["tag_cache"] = tag_cache
+        application.add_handler(CommandHandler("tags", tags))
+        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, mention_handler))
+        logging.info("main/main - Mention handler and /tags command enabled and handlers registered.")
+
+    # Conditional registration of ODG command
+    if config['Features']['ODGCommand']:
+        application.add_handler(CommandHandler("odg", odg))
+        logging.info("main/main - ODG command enabled and handler registered.")
+
+    # Conditional registration of Eagle API handlers
+    if config['Features']['EAgleAPIIntegration']:
+        eagle_api = EagleAPI(config['Settings']['EAGLE_API_URL'])
+        application.bot_data["eagle_api"] = eagle_api
+        application.add_handler(CommandHandler("inlab", inlab))
+        application.add_handler(CommandHandler("ore", ore))
+        logging.info("main/main - Eagle API integration enabled and handlers registered.")
 
     # Conditional registration of quiz-related handlers
     if config['Features']['FSQuiz']:
@@ -152,12 +185,5 @@ def main() -> None:
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
-    # Validate environment variables
-    required_vars = ["TELEGRAM_BOT_TOKEN", "NOCO_API_KEY"]
-    missing_vars = [var for var in required_vars if not os.getenv(var)]
-    if missing_vars:
-        logging.error(f"main/main - Missing required environment variables: {', '.join(missing_vars)}")
-        exit(1)
-
     main()
     logging.info("main/main - T.E.C.S. ended")

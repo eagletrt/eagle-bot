@@ -33,6 +33,11 @@ async def question_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     selected_option = answer.option_ids[0]
     correct_option = options['correct_option']
 
+    # Log the answer if logging is enabled
+    if not context.bot_data['config']['Features']['FSQuizLogging'] or not context.bot_data['config']['Features']['NocoDBIntegration']:
+        logging.warning("commands/question - Quiz answer logging is disabled in configuration.")
+        return
+    
     nocodb = context.bot_data['nocodb']
     if selected_option == correct_option:
         logging.info(f"commands/question - User @{user.username} answered correctly for question {options['question_id']}-{options['quiz_id']}")
