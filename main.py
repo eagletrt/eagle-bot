@@ -3,6 +3,7 @@ import logging
 import tomllib
 from modules.nocodb import NocoDB
 from modules.api_client import EagleAPI
+from modules.shlink import ShlinkAPI
 from telegram import Update, BotCommand
 from telegram.ext import Application, CommandHandler, MessageHandler, PollAnswerHandler, filters
 
@@ -13,6 +14,7 @@ from commands.inlab import inlab
 from commands.ore import ore
 from commands.tags import tags
 from commands.mentions import mention_handler
+from commands.qr import qr
 from commands.quiz import quiz
 from commands.quizzes import quizzes
 from commands.event import event
@@ -73,6 +75,10 @@ async def ps(application: Application) -> None:
             BotCommand("ore", "Your month's lab hours"),
         ])
 
+    # Conditional addition of QR code generator command
+    if application.bot_data["config"]['Features']['QRcodeGenerator']:
+        commands.append(BotCommand("qr", "Generate a shlink QR code"))
+
     # Conditional addition of quiz commands
     if application.bot_data["config"]['Features']['FSQuiz']:
         commands.extend([
@@ -93,13 +99,15 @@ def main() -> None:
             exit(1)
 
     # Validate environment variables
-    required_vars = ["TELEGRAM_BOT_TOKEN", "NOCO_API_KEY"]
+    required_vars = ["TELEGRAM_BOT_TOKEN", "NOCO_API_KEY", "SHLINK_API_KEY"]
     missing_vars = [var for var in required_vars if not os.getenv(var)]
     if missing_vars:
         if "TELEGRAM_BOT_TOKEN" in missing_vars:
             logging.error("main/main - TELEGRAM_BOT_TOKEN environment variable is required but not set.")
         if "NOCO_API_KEY" in missing_vars and config['Features']['NocoDBIntegration']:
             logging.error("main/main - NOCO_API_KEY environment variable is required but not set.")
+        if "SHLINK_API_KEY" in missing_vars and config['Features']['QRcodeGenerator']:
+            logging.error("main/main - SHLINK_API_KEY environment variable is required but not set.")
         exit(1)
 
     # Configure logging from config file
@@ -169,6 +177,13 @@ def main() -> None:
         application.add_handler(CommandHandler("inlab", inlab))
         application.add_handler(CommandHandler("ore", ore))
         logging.info("main/main - Eagle API integration enabled and handlers registered.")
+
+    # Conditional registration of QR code generator handler
+    if config['Features']['QRcodeGenerator']:
+        shlink_api = ShlinkAPI(config['Settings']['SHLINK_API_URL'], os.getenv("SHLINK_API_KEY"))
+        application.bot_data["shlink_api"] = shlink_api
+        application.add_handler(CommandHandler("qr", qr))
+        logging.info("main/main - QR code generator feature enabled and handler registered.")
 
     # Conditional registration of quiz-related handlers
     if config['Features']['FSQuiz']:
