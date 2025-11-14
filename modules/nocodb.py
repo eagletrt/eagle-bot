@@ -100,3 +100,42 @@ class NocoDB:
         )
         items = res.json().get("list")
         return items[0].get("Telegram Username", "") if items else None
+
+    def quiz_answer_log(self, username: str, is_correct: bool) -> None:
+        """ Log a question answer attempt for the given username. """
+
+        table = config['NocoDB']['quiz']['table']
+        url = f"{self.base_url}/api/v2/tables/{table}/records"
+
+        # Find existing record for the username
+        find_params = {
+            "where": f"(username,eq,{username})",
+            "fields": "Id,answered,correct",
+            "limit": 1
+        }
+        res = self._session.get(url, params=find_params)
+        res.raise_for_status()
+        records = res.json().get("list", [])
+
+        if records:
+            # User exists, update their stats
+            record = records[0]
+            record_id = record['Id']
+
+            payload = {
+                "Id": record_id,
+                "answered": record.get('answered', 0) + 1,
+                "correct": record.get('correct', 0) + (1 if is_correct else 0)
+            }
+
+            update_res = self._session.patch(f"{url}", json=payload)
+            update_res.raise_for_status()
+        else:
+            # User does not exist, create a new record
+            payload = {
+                "username": username,
+                "answered": 1,
+                "correct": 1 if is_correct else 0
+            }
+            create_res = self._session.post(url, json=payload)
+            create_res.raise_for_status()

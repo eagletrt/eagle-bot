@@ -47,6 +47,7 @@ class Questions(db.Entity):
     position_index = Optional(int)  # The position of the question in the quiz.
     answers = Set('Answers')  # A collection of possible answers for this question.
     images = Set('Images')  # A collection of images associated with this question.
+    polls = Set('Polls')  # A collection of polls associated with this question.
 
     def isValid(self):
         """
@@ -75,6 +76,13 @@ class Images(db.Entity):
     id = PrimaryKey(int, auto=True)  # Unique identifier for the image.
     path = Required(str)  # The file path or URL to the image.
     question = Required(Questions)  # The question this image is associated with.
+
+class Polls(db.Entity):
+    """ Represents a mapping between Telegram poll IDs and quiz questions. """
+
+    poll_id = PrimaryKey(str)  # The unique identifier for the Telegram poll.
+    question = Required(Questions)  # The question associated with this poll.
+    correct_option = Required(int)  # The index of the correct option in the poll.
     
 # Generate mapping between the above entities and the actual database tables.
 db.generate_mapping(create_tables=True)

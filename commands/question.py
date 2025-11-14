@@ -1,6 +1,6 @@
 import logging
 from pony.orm import db_session
-from modules.quiz import Questions
+from modules.quiz import Questions, Polls
 from telegram import Update, InputMediaPhoto
 from telegram.ext import ContextTypes
 import re
@@ -50,35 +50,40 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         answers = list(question.answers)
         images = list(question.images)
     
-    qtext = f"Question {question.id}-{question.quiz.quiz_id} {question.type}"
+        qtext = f"Question {question.id}-{question.quiz.quiz_id} {question.type}"
 
-    options = [a.answer_text for a in answers]
-    correct_indices = [i for i, a in enumerate(answers) if a.is_correct]
+        options = [a.answer_text for a in answers]
+        correct_indices = [i for i, a in enumerate(answers) if a.is_correct]
 
-    if not options or not correct_indices:
-        logging.warning(f"commands/question - Question {question.id}-{question.quiz.quiz_id} has no answers or correct answer defined for user @{username}")
-        return await update.message.reply_html(f"Question {question.id}-{question.quiz.quiz_id} has no answers or correct answer defined.")
-    
-    # Send question text and any associated images
-    if len(images) == 1:
-        await update.message.reply_photo(f"https://img.fs-quiz.eu/{images[0].path}", caption=f"{question.text}")
-    elif len(images) > 1:
-        media_group = [
-            InputMediaPhoto(media=f"https://img.fs-quiz.eu/{img.path}")
-            for img in images
-        ]
-        await update.message.reply_media_group(media=media_group)
-        await update.message.reply_text(f"{question.text}")
-    else:
-        await update.message.reply_text(f"{question.text}")
+        if not options or not correct_indices:
+            logging.warning(f"commands/question - Question {question.id}-{question.quiz.quiz_id} has no answers or correct answer defined for user @{username}")
+            return await update.message.reply_html(f"Question {question.id}-{question.quiz.quiz_id} has no answers or correct answer defined.")
+        
+        # Send question text and any associated images
+        if len(images) == 1:
+            await update.message.reply_photo(f"https://img.fs-quiz.eu/{images[0].path}", caption=f"{question.text}")
+        elif len(images) > 1:
+            media_group = [
+                InputMediaPhoto(media=f"https://img.fs-quiz.eu/{img.path}")
+                for img in images
+            ]
+            await update.message.reply_media_group(media=media_group)
+            await update.message.reply_text(f"{question.text}")
+        else:
+            await update.message.reply_text(f"{question.text}")
 
-    logging.info(f"commands/question - User @{username} requested question {question.id}-{question.quiz.quiz_id} correctly")
-    
-    # Send the poll with the question options
-    return await update.message.reply_poll(
-        qtext,
-        options,
-        type="quiz",
-        correct_option_id=correct_indices[0],
-        is_anonymous=False,
-    )
+        logging.info(f"commands/question - User @{username} requested question {question.id}-{question.quiz.quiz_id} correctly")
+        
+        # Send the poll with the question options
+        message = await update.message.reply_poll(
+            qtext,
+            options,
+            type="quiz",
+            correct_option_id=correct_indices[0],
+            is_anonymous=False,
+        )
+
+        # Store the mapping between the poll ID and the question in the database
+        Polls(poll_id=message.poll.id, question=question, correct_option=correct_indices[0])
+
+    return

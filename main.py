@@ -4,7 +4,7 @@ import tomllib
 from modules.nocodb import NocoDB
 from modules.api_client import EagleAPI
 from telegram import Update, BotCommand
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, PollAnswerHandler, filters
 
 # Import command handlers
 from commands.start import start
@@ -18,6 +18,7 @@ from commands.quizzes import quizzes
 from commands.event import event
 from commands.events import events
 from commands.question import question
+from commands.question_answer import question_answer
 from commands.answer import answer
 
 # Color codes used for coloring log output in console only
@@ -143,6 +144,7 @@ def main() -> None:
         application.add_handler(CommandHandler("event", event))
         application.add_handler(CommandHandler("events", events))
         application.add_handler(CommandHandler("question", question))
+        application.add_handler(PollAnswerHandler(question_answer))
         application.add_handler(CommandHandler("answer", answer))
         logging.info("main/main - Quiz feature enabled and handlers registered.")
 
