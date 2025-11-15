@@ -18,7 +18,7 @@ async def event(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return await update.message.reply_html("You need a Telegram username to use this command.")
     
     # Whitelist check
-    if username not in context.bot_data['config']['Users']['Whitelist_QuizDB']:
+    if username not in context.bot_data['config']['Whitelist']['QuizDB']:
         logging.warning(f"commands/event - Unauthorized /event attempt by @{username}")
         return
     
