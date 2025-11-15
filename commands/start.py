@@ -16,6 +16,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return await update.message.reply_html("You need a Telegram username to use this command.")
 
     logging.info(f"commands/start - User @{username} started the bot")
-    return await update.message.reply_html(
-        f"Hi @{username}!"
+    return await update.message.reply_sticker(
+        sticker="CAACAgQAAxkBAAE94hJpGMjqZi9VR1ee2gbzFw7POwuNIgAC_Q8AAn7EEVD5HDWAG_q_GTYE"
     )
