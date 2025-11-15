@@ -18,7 +18,8 @@ async def question_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             options = {
                 "question_id": options.question.id,
                 "quiz_id": options.question.quiz.quiz_id,
-                "correct_option": options.correct_option
+                "correct_option": options.correct_option,
+                "areas": options.question.areas
             }
     except KeyError:
         logging.warning(f"commands/question - Received answer for unknown poll ID {poll_id} from user @{user.username}")
@@ -40,10 +41,10 @@ async def question_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     
     nocodb = context.bot_data['nocodb']
     if selected_option == correct_option:
-        logging.info(f"commands/question - User @{user.username} answered correctly for question {options['question_id']}-{options['quiz_id']}")
+        logging.info(f"commands/question - User @{user.username} answered correctly for question {options['question_id']}-{options['quiz_id']} | ({options['areas']})")
         nocodb.quiz_answer_log(user.username, True)
     else:
-        logging.info(f"commands/question - User @{user.username} answered incorrectly for question {options['question_id']}-{options['quiz_id']}")
+        logging.info(f"commands/question - User @{user.username} answered incorrectly for question {options['question_id']}-{options['quiz_id']} | ({options['areas']})")
         nocodb.quiz_answer_log(user.username, False)
 
     return

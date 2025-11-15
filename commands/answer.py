@@ -52,7 +52,7 @@ async def answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         indicator = "✅" if ans.is_correct else "❌"
         answer_texts.append(f"{indicator} {ans.answer_text}")
 
-    logging.info(f"commands/answer - User @{username} requested correctly answers for question {question_id} in quiz {quiz_id}")
+    logging.info(f"commands/answer - User @{username} requested correctly answers for question {question_id} in quiz {quiz_id} areas ({question_entity.areas})")
 
     return await update.message.reply_html(
         f"<b>Answers for Question ID {question_id} in Quiz ID {quiz_id}:</b>\n" + "\n".join(answer_texts)

@@ -56,8 +56,8 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         correct_indices = [i for i, a in enumerate(answers) if a.is_correct]
 
         if not options or not correct_indices:
-            logging.warning(f"commands/question - Question {question.id}-{question.quiz.quiz_id} has no answers or correct answer defined for user @{username}")
-            return await update.message.reply_html(f"Question {question.id}-{question.quiz.quiz_id} has no answers or correct answer defined.")
+            logging.warning(f"commands/question - Question {question.id}-{question.quiz.quiz_id} | ({question.areas}) has no answers or correct answer defined for user @{username}")
+            return await update.message.reply_text(f"No valid question found for question ID {question_id} in quiz ID {quiz_id}.")
         
         # Send question text and any associated images
         if len(images) == 1:
@@ -72,7 +72,7 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         else:
             await update.message.reply_text(f"{question.text}")
 
-        logging.info(f"commands/question - User @{username} requested question {question.id}-{question.quiz.quiz_id} correctly")
+        logging.info(f"commands/question - User @{username} requested question {question.id}-{question.quiz.quiz_id} | ({question.areas}) correctly")
         
         # Send the poll with the question options
         message = await update.message.reply_poll(

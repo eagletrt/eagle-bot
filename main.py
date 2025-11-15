@@ -6,6 +6,7 @@ from modules.api_client import EagleAPI
 from modules.shlink import ShlinkAPI
 from telegram import Update, BotCommand
 from telegram.ext import Application, CommandHandler, MessageHandler, PollAnswerHandler, filters
+from modules.scheduler import setup_scheduler
 
 # Import command handlers
 from commands.start import start
@@ -56,7 +57,11 @@ console_handler.setFormatter(ColorFormatter("%(asctime)s [%(levelname)s] %(messa
 logging.basicConfig(level=logging.INFO, handlers=[console_handler])
 
 async def ps(application: Application) -> None:
-    """Post-initialization hook to set bot commands."""
+    """Post-initialization hook to set bot commands and start scheduler if enabled."""
+
+    if application.bot_data["config"]['Features']['FSQuizScheduledSends']:
+        setup_scheduler(application)
+        logging.info("main/main - Scheduled quiz sends enabled.")
 
     commands = []
 
@@ -130,6 +135,7 @@ def main() -> None:
     # Remove verbose logs (PTB)
     logging.getLogger("httpx").setLevel(logging.WARNING)
     logging.getLogger("telegram").setLevel(logging.WARNING)
+    logging.getLogger("apscheduler").setLevel(logging.WARNING)
 
     application = (
         Application.builder()
