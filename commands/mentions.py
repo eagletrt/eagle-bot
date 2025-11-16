@@ -84,4 +84,4 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         if members:
             tag_list = ' '.join(members)
             await msg.reply_html(f"<b>{tag}</b>:\n{tag_list}")
-        return
+            return

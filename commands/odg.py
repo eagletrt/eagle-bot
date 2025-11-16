@@ -36,6 +36,7 @@ async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             odg.reset()
             logging.info(f"commands/odg - User @{username} reset the ODG in chat {chat_id} thread {thread_id}")
             await update.message.set_reaction("👍")
+            return
         
         # Remove a task by its shown ID (user-provided). Convert to zero-based index for internal store.
         elif update.message.text.startswith("/odg remove"):
@@ -55,6 +56,7 @@ async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             else:
                 logging.warning(f"commands/odg - User @{username} attempted to remove non-existent task #{task_id} from the ODG in chat {chat_id} thread {thread_id}")
                 await update.message.reply_text(f"Task #{task_id} not found in the todo list.")
+            return
             
         # Add a new task. The user-provided text follows the command (/odg <text>)
         elif update.message.text.startswith("/odg "):
@@ -67,6 +69,7 @@ async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             # React with a pencil emoji to indicate task created
             logging.info(f"commands/odg - User @{username} added a new task to the ODG in chat {chat_id} thread {thread_id}")
             await update.message.set_reaction("✍")
+            return
         
         # Default: show the todo list, formatted as HTML
         else:
@@ -74,5 +77,4 @@ async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             await update.message.reply_html(
                 f"📝 <b>Todo List</b>\n\n{odg}"
             )
-            
-        return
+            return
