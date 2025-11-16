@@ -91,10 +91,10 @@ def setup_scheduler(application):
 def gen_scheduler(scheduler, application, division, config) -> None:
     """Generates scheduled jobs for a specific division based on configuration."""
         
-    group_id = config['SheduledQuestions'][division]["GroupID"]
-    threads = config['SheduledQuestions'][division]["Threads"]
-    area = config['SheduledQuestions'][division]["area"]
-    schedulings = config['SheduledQuestions'][division]["Sheduling"]
+    group_id = config['ScheduledQuestions'][division]["GroupID"]
+    threads = config['ScheduledQuestions'][division]["Threads"]
+    area = config['ScheduledQuestions'][division]["area"]
+    schedulings = config['ScheduledQuestions'][division]["Scheduling"]
 
     for i, thread_id in enumerate(threads):
         cron_schedule = schedulings[i]

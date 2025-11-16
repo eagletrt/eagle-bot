@@ -12,7 +12,7 @@ QRcode = ['user1', 'user2'] # Telegram usernames allowed to use QR code features
 
 [Features]
 EAgleAPIIntegration = false # Enable or disable integration with the Eagle API
-NocoDBIntegration = false # Enable or disable NocoDB integration (tags, metions, inlab, quiz logging)
+NocoDBIntegration = false # Enable or disable NocoDB integration (tags, mentions, inlab, quiz logging)
 ODGCommand = false # Enable or disable the /odg command
 MentionHandler = false # Enable or disable the mention handler (/tags command && mention responses)
 QRcodeGenerator = false # Enable or disable the QR code generator feature
@@ -25,16 +25,16 @@ DatabasePath = '../data/botDatabase.db' # Path to the main database file
 QuizDBPath = '../data/quizDatabase.db' # Path to the quiz database file
 LogFilePath = './data/logFile.log' # Path to the log file
 
-[SheduledQuestions.Engineering]
+[ScheduledQuestions.Engineering]
 GroupID = '-GroupID' # Telegram group ID for the Engineering area
 Threads = ['1', '2'] # List of scheduled question thread IDs for the Engineering area
-Sheduling = ['*/1 * * * *', '*/2 * * * *'] # List of cron scheduling strings for every thread in Threads
+Scheduling = ['*/1 * * * *', '*/2 * * * *'] # List of cron scheduling strings for every thread in Threads
 area = ['HW', "SW"] # List of area codes for the Engineering area
 
-[SheduledQuestions.Operations]
+[ScheduledQuestions.Operations]
 GroupID = '-GroupID' # Telegram group ID for the Operations area
 Threads = ['3', '4'] # List of scheduled question thread IDs for the Operations area
-Sheduling = ['*/1 * * * *', '*/2 * * * *'] # List of cron scheduling strings for every thread in Threads
+Scheduling = ['*/1 * * * *', '*/2 * * * *'] # List of cron scheduling strings for every thread in Threads
 area = ['CM', "MGT"] # List of area codes for the Operations area
 
 [NocoDB.members]
