@@ -20,7 +20,7 @@ class ShlinkAPI:
         })
 
     def generate_qr_code(self, url: str) -> io.BytesIO:
-        """ Generate a QR code for the given URL, optionally with a custom code. """
+        """ Generate a QR code for the given URL. """
 
         img = qrcode.make(url)
         

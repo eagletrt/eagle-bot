@@ -15,7 +15,8 @@ async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     username = update.effective_user.username
     if not username:
         logging.warning("commands/odg - User without username attempted to use /odg command")
-        return await update.message.reply_html("You need a Telegram username to use this command.")
+        await update.message.reply_html("You need a Telegram username to use this command.")
+        return
 
     # Get chat and thread identifiers
     chat_id = update.effective_chat.id
@@ -34,7 +35,7 @@ async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if update.message.text.startswith("/odg reset"):
             odg.reset()
             logging.info(f"commands/odg - User @{username} reset the ODG in chat {chat_id} thread {thread_id}")
-            return await update.message.set_reaction("👍")
+            await update.message.set_reaction("👍")
         
         # Remove a task by its shown ID (user-provided). Convert to zero-based index for internal store.
         elif update.message.text.startswith("/odg remove"):
@@ -44,15 +45,16 @@ async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
                 # If parsing failed, notify the user
                 logging.warning(f"commands/odg - User @{username} provided invalid task ID for removal in chat {chat_id} thread {thread_id}")
-                return await update.message.reply_text("Task ID must be a number.")
+                await update.message.reply_text("Task ID must be a number.")
+                return
 
             # remove_task expects zero-based index; if removal was successful react with thumbs up
             if odg.remove_task(task_id-1):
                 logging.info(f"commands/odg - User @{username} removed task #{task_id} from the ODG in chat {chat_id} thread {thread_id}")
-                return await update.message.set_reaction("👍")
+                await update.message.set_reaction("👍")
             else:
                 logging.warning(f"commands/odg - User @{username} attempted to remove non-existent task #{task_id} from the ODG in chat {chat_id} thread {thread_id}")
-                return await update.message.reply_text(f"Task #{task_id} not found in the todo list.")
+                await update.message.reply_text(f"Task #{task_id} not found in the todo list.")
             
         # Add a new task. The user-provided text follows the command (/odg <text>)
         elif update.message.text.startswith("/odg "):
@@ -64,11 +66,13 @@ async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
             # React with a pencil emoji to indicate task created
             logging.info(f"commands/odg - User @{username} added a new task to the ODG in chat {chat_id} thread {thread_id}")
-            return await update.message.set_reaction("✍")
+            await update.message.set_reaction("✍")
         
         # Default: show the todo list, formatted as HTML
         else:
             logging.info(f"commands/odg - User @{username} requested the ODG in chat {chat_id} thread {thread_id}")
-            return await update.message.reply_html(
+            await update.message.reply_html(
                 f"📝 <b>Todo List</b>\n\n{odg}"
             )
+            
+        return

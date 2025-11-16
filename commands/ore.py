@@ -13,10 +13,10 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     username = update.effective_user.username
     if not username:
         logging.warning("commands/ore - User without username attempted to use /ore command")
-        return await update.message.reply_html("You need a Telegram username to use this command.")
+        await update.message.reply_html("You need a Telegram username to use this command.")
+        return
     
-    # Extract username and services from bot_data
-    username = update.effective_user.username
+    # Extract services from bot_data
     nocodb = context.bot_data["nocodb"]
     eagle_api = context.bot_data["eagle_api"]
 
@@ -24,7 +24,8 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     team_email = nocodb.email_from_username(username)
     if not team_email:
         logging.warning(f"commands/ore - No team email found for @{username}")
-        return await update.message.reply_html("Your Telegram username is not associated with a team email.")
+        await update.message.reply_html("Your Telegram username is not associated with a team email.")
+        return
 
     # Local helper to format hours (float) into a human friendly string
     def pretty_time(hours: float) -> str:
@@ -38,6 +39,7 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     logging.info(f"commands/ore - User @{username} has spent {ore_str} in the lab this month")
 
-    return await update.message.reply_html(
+    await update.message.reply_html(
         rf"This month you've spent <b>{ore_str}</b> in the lab!"
     )
+    return

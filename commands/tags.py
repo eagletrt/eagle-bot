@@ -13,17 +13,19 @@ async def tags(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     username = update.effective_user.username
     if not username:
         logging.warning("commands/tags - User without username attempted to use /tags command")
-        return await update.message.reply_html("You need a Telegram username to use this command.")
+        await update.message.reply_html("You need a Telegram username to use this command.")
+        return
 
     # Access the tag cache from bot_data
     tag_cache = context.bot_data["tag_cache"]
 
     logging.info(f"commands/tags - User @{username} requested tag list")
 
-    return await update.message.reply_html(
+    await update.message.reply_html(
         "#️⃣ <b>Tag List</b>\n\n"
         f"<b>Areas</b>\n{', '.join(tag_cache['areas'])}\n\n"
         f"<b>Workgroups</b>\n{', '.join(tag_cache['workgroups'])}\n\n"
         f"<b>Projects</b>\n{', '.join(tag_cache['projects'])}\n\n"
         f"<b>Roles</b>\n{', '.join(tag_cache['roles'])}"
     )
+    return

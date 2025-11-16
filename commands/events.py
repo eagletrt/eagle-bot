@@ -14,8 +14,9 @@ async def events(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Ensure the user has a Telegram username
     username = update.effective_user.username
     if not username:
-        logging.warning("User without username attempted to use /events command")
-        return await update.message.reply_html("You need a Telegram username to use this command.")
+        logging.warning("commands/events - User without username attempted to use /events command")
+        await update.message.reply_html("You need a Telegram username to use this command.")
+        return
     
     # Whitelist check
     if username not in context.bot_data['config']['Whitelist']['QuizDB']:
@@ -27,13 +28,15 @@ async def events(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         event_list = Events.select().order_by(Events.event_id)
         if not event_list:
             logging.error(f"commands/events - No events found for user @{username}")
-            return await update.message.reply_html("No events found in the database.")
+            await update.message.reply_html("No events found in the database.")
+            return
     
         event_texts = []
         for e in event_list:
             event_texts.append(f"<code>/event {e.event_id}</code> - {e.short_name}")
     
     logging.info(f"commands/events - User @{username} requested correctly the list of available events")
-    return await update.message.reply_html(
+    await update.message.reply_html(
         f"<b>Available Events:</b>\n" + "\n".join(event_texts)
     )
+    return

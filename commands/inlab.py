@@ -15,8 +15,9 @@ async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Ensure the user has a Telegram username
     username = update.effective_user.username
     if not username:
-        logging.warning("User without username attempted to use /inlab command")
-        return await update.message.reply_html("You need a Telegram username to use this command.")
+        logging.warning("commands/inlab - User without username attempted to use /inlab command")
+        await update.message.reply_html("You need a Telegram username to use this command.")
+        return
 
     # Load the EagleAPI and NocoDB clients from bot data
     eagle_api = context.bot_data["eagle_api"]
@@ -36,8 +37,9 @@ async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Reply with a message depending on the count
     if inlab_data['count'] == 0:
-        return await update.message.reply_html("Nobody is in the lab right now.")
+        await update.message.reply_html("Nobody is in the lab right now.")
     else:
-        return await update.message.reply_html(
+        await update.message.reply_html(
             f"There are <b>{inlab_data['count']}</b> people in the lab: {', '.join(tags)}"
         )
+    return

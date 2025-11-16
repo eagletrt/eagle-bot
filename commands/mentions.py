@@ -13,7 +13,7 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     # Ensure the user has a Telegram username
     username = update.effective_user.username
     if not username:
-        logging.warning("User without username attempted to use mention handler")
+        logging.warning("commands/mentions - User without username attempted to use mention handler")
         return
 
     # Guard: skip if there's no text (e.g. stickers, images)
@@ -30,7 +30,6 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return
 
     # Load NocoDB and tag cache from bot data
-    eagle_api = context.bot_data["eagle_api"]
     nocodb = context.bot_data["nocodb"]
     tag_cache = context.bot_data["tag_cache"]
 
@@ -39,6 +38,15 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         tag_name = tag[1:] # Remove '@'
 
         if tag_name == "inlab":
+
+            # Check if EagleAPI integration is enabled
+            if not context.bot_data['config']['Features']['EAgleAPIIntegration']:
+                logging.warning(f"commands/mentions - EagleAPI integration is disabled; cannot process @inlab request from @{username}")
+                return
+            
+            # Load the EagleAPI from bot data
+            eagle_api = context.bot_data["eagle_api"]
+
             # Call EagleAPI client; expected structure: {'people': [emails], 'count': n}
             inlab_data = eagle_api.inlab()
 
@@ -49,15 +57,16 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             ]
 
             # Log the in-lab data for debugging
-            logging.info(f"commands/inlab - User @{username} requested correctly in-lab data: {inlab_data}")
+            logging.info(f"commands/mentions - User @{username} requested correctly in-lab data: {inlab_data}")
 
             # Reply with a message depending on the count
             if inlab_data['count'] == 0:
-                return await update.message.reply_html("Nobody is in the lab right now.")
+                await update.message.reply_html("Nobody is in the lab right now.")
             else:
-                return await update.message.reply_html(
+                await update.message.reply_html(
                     f"There are <b>{inlab_data['count']}</b> people in the lab: {', '.join(tags)}"
                 )
+            return
         elif tag in tag_cache.get("areas", []):
             members = nocodb.members(tag.lstrip('@'), "area")
         elif tag in tag_cache.get("workgroups", []):
@@ -74,4 +83,5 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         # If members found, reply with an HTML-formatted list
         if members:
             tag_list = ' '.join(members)
-            return await msg.reply_html(f"<b>{tag}</b>:\n{tag_list}")
+            await msg.reply_html(f"<b>{tag}</b>:\n{tag_list}")
+        return

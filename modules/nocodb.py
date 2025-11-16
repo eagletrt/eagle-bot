@@ -35,7 +35,10 @@ class NocoDB:
             f"{self.base_url}/api/v2/tables/{config['NocoDB'][kind]['table']}/records",
             params={"limit": 1000, "fields": "Tag"}
         )
+        res.raise_for_status()
         items = res.json().get("list")
+        if not items:
+            return []
         return [f"@{item['Tag'].lower().strip()}" for item in items]
 
     def members(self, tag: str, kind: str) -> list[str]:
@@ -51,7 +54,11 @@ class NocoDB:
         res = self._session.get(
             f"{self.base_url}/api/v2/tables/{config['NocoDB'][kind]['table']}/links/{config['NocoDB'][kind]['link']}/records/{nocoid}",
             params={"limit": 1000}
-        ).json().get("list")
+        )
+        res.raise_for_status()
+        res = res.json().get("list")
+        if not res:
+            return []
 
         member_ids = [str(item["Id"]) for item in res]
 

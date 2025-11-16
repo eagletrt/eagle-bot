@@ -13,9 +13,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     username = update.effective_user.username
     if not username:
         logging.warning("commands/start - User without username attempted to use /start command")
-        return await update.message.reply_html("You need a Telegram username to use this command.")
+        await update.message.reply_html("You need a Telegram username to use this command.")
+        return
 
     logging.info(f"commands/start - User @{username} started the bot")
-    return await update.message.reply_sticker(
+    await update.message.reply_sticker(
         sticker="CAACAgQAAxkBAAE94hJpGMjqZi9VR1ee2gbzFw7POwuNIgAC_Q8AAn7EEVD5HDWAG_q_GTYE"
     )
+    return

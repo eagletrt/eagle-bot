@@ -24,7 +24,7 @@ async def send_scheduled_question(bot, group_id, thread_id, area_code):
         correct_indices = [i for i, a in enumerate(answers) if a.is_correct]
 
         if not options or not correct_indices:
-            logging.warning(f"commands/scheduler - Question {question.id}-{question.quiz.quiz_id} has no answers or correct answer defined.")
+            logging.warning(f"modules/scheduler - Question {question.id}-{question.quiz.quiz_id} has no answers or correct answer defined.")
             return
         
         # Send question text and any associated images
@@ -56,7 +56,7 @@ async def send_scheduled_question(bot, group_id, thread_id, area_code):
                 text=f"{question.text}"
             )
 
-        logging.info(f"commands/scheduler - Scheduled question {question.id}-{question.quiz.quiz_id} | {question.areas} sent to group {group_id} in thread {thread_id}.")
+        logging.info(f"modules/scheduler - Scheduled question {question.id}-{question.quiz.quiz_id} | {question.areas} sent to group {group_id} in thread {thread_id}.")
         
         # Send the poll with the question options
         message = await bot.send_poll(
@@ -84,7 +84,7 @@ def setup_scheduler(application):
     gen_scheduler(scheduler, application, 'Operations', config)
 
     scheduler.start()
-    logging.info("modules/scheduler - Scheduler avviato.")
+    logging.info("modules/scheduler - Scheduler started.")
 
     return
 
@@ -104,6 +104,6 @@ def gen_scheduler(scheduler, application, division, config) -> None:
             args=[application.bot, group_id, thread_id, area[i]],
             **{field: value for field, value in zip(['minute', 'hour', 'day', 'month', 'day_of_week'], cron_schedule.split())}
         )
-        logging.info(f"modules/scheduler - Job schedulato per la divisione {division}, gruppo {group_id}, thread {thread_id}, area {area[i]} con cron '{cron_schedule}'")
+        logging.info(f"modules/scheduler - Job scheduled for division {division}, group {group_id}, thread {thread_id}, area {area[i]} with cron '{cron_schedule}'")
 
     return

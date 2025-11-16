@@ -15,7 +15,8 @@ async def quizzes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     username = update.effective_user.username
     if not username:
         logging.warning("commands/quizzes - User without username attempted to use /quizzes command")
-        return await update.message.reply_html("You need a Telegram username to use this command.")
+        await update.message.reply_html("You need a Telegram username to use this command.")
+        return
     
     # Whitelist check
     if username not in context.bot_data['config']['Whitelist']['QuizDB']:
@@ -27,13 +28,15 @@ async def quizzes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         all_quizzes = Quiz.select().order_by(Quiz.quiz_id)
         if not all_quizzes:
             logging.error(f"commands/quizzes - No quizzes found for user @{username}")
-            return await update.message.reply_html("No quizzes found in the database.")
+            await update.message.reply_html("No quizzes found in the database.")
+            return
     
         quiz_texts = []
         for q in all_quizzes:
             quiz_texts.append(f"<code>/quiz {q.quiz_id}</code> - {q.year} {q.class_}")
     
     logging.info(f"commands/quizzes - User @{username} requested correctly the list of available quizzes")
-    return await update.message.reply_html(
+    await update.message.reply_html(
         f"<b>Available Quizzes:</b>\n" + "\n".join(quiz_texts)
     )
+    return

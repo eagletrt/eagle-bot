@@ -13,11 +13,12 @@ async def qr(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     username = update.effective_user.username
     if not username:
         logging.warning("commands/qr - User without username attempted to use /qr command")
-        return await update.message.reply_html("You need a Telegram username to use this command.")
+        await update.message.reply_html("You need a Telegram username to use this command.")
+        return
     
     # Whitelist check
     if username not in context.bot_data['config']['Whitelist']['QRcode']:
-        logging.warning(f"commands/answer - Unauthorized /answer attempt by @{username}")
+        logging.warning(f"commands/qr - Unauthorized /qr attempt by @{username}")
         return
 
     # Remove bot mention if present and trim whitespace
@@ -32,7 +33,8 @@ async def qr(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     if not url:
         logging.warning(f"commands/qr - User @{username} did not provide a URL for QR code generation")
-        return await update.message.reply_text("Please provide a URL to generate a QR code. Usage: /qr <URL> [custom-code]")
+        await update.message.reply_text("Please provide a URL to generate a QR code. Usage: /qr <URL> [custom-code]")
+        return
     
     try:
         # Generate short URL and QR code
@@ -40,7 +42,8 @@ async def qr(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         qr_image = shlink.generate_qr_code(short_url)
 
         logging.info(f"commands/qr - Successfully generated QR code for user @{username} with URL: {short_url}")
-        return await update.message.reply_photo(qr_image, caption=f"Here is your short URL: {short_url}")
+        await update.message.reply_photo(qr_image, caption=f"Here is your short URL: {short_url}")
     except Exception as e:
         logging.error(f"commands/qr - Error generating QR code for user @{username}: {e}")
-        return await update.message.reply_text("An error occurred while generating the QR code. Please try again later.")
+        await update.message.reply_text("An error occurred while generating the QR code. Please try again later.")
+    return

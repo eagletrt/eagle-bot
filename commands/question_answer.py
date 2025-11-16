@@ -12,18 +12,17 @@ async def question_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     user = answer.user
 
     # Retrieve the options from your stored poll data
-    try:
-        with db_session:
-            options = Polls.get(poll_id=poll_id)
-            options = {
-                "question_id": options.question.id,
-                "quiz_id": options.question.quiz.quiz_id,
-                "correct_option": options.correct_option,
-                "areas": options.question.areas
-            }
-    except KeyError:
-        logging.warning(f"commands/question - Received answer for unknown poll ID {poll_id} from user @{user.username}")
-        return
+    with db_session:
+        options = Polls.get(poll_id=poll_id)
+        if options is None:
+            logging.warning(f"commands/question - Received answer for unknown poll ID {poll_id} from user @{user.username}")
+            return
+        options = {
+            "question_id": options.question.id,
+            "quiz_id": options.question.quiz.quiz_id,
+            "correct_option": options.correct_option,
+            "areas": options.question.areas
+        }
 
     # Check if the user retracted their vote
     if not answer.option_ids:
@@ -35,7 +34,7 @@ async def question_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     correct_option = options['correct_option']
 
     # Log the answer if logging is enabled
-    if not context.bot_data['config']['Features']['FSQuizLogging'] or not context.bot_data['config']['Features']['NocoDBIntegration']:
+    if not context.bot_data['config']['Features']['FSQuizLogging'] and context.bot_data['config']['Features']['NocoDBIntegration']:
         logging.warning("commands/question - Quiz answer logging is disabled in configuration.")
         return
     

@@ -16,7 +16,8 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     username = update.effective_user.username
     if not username:
         logging.warning("commands/question - User without username attempted to use /question command")
-        return await update.message.reply_html("You need a Telegram username to use this command.")
+        await update.message.reply_html("You need a Telegram username to use this command.")
+        return
     
     # Remove bot mention if present and trim whitespace
     text = update.message.text
@@ -36,7 +37,8 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             # If an ID is provided, parse it and fetch the specific question.
             if not id or not re.fullmatch(r"\d+-\d+", id):
                 logging.info(f"commands/question - Invalid question ID format from @{username}: {id}")
-                return await update.message.reply_text("Please provide a valid question ID in the format <question_id>-<quiz_id>.")
+                await update.message.reply_text("Please provide a valid question ID in the format <question_id>-<quiz_id>.")
+                return
             
             id_parts = id.split('-', 1)
             question_id = id_parts[0]
@@ -45,7 +47,8 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             question = Questions.get(id=question_id, quiz=quiz_id)
             if not question or not question.isValid():
                 logging.info(f"commands/question - No valid question found for question ID {question_id} in quiz ID {quiz_id} for user @{username}")
-                return await update.message.reply_text(f"No valid question found for question ID {question_id} in quiz ID {quiz_id}.")
+                await update.message.reply_text(f"No valid question found for question ID {question_id} in quiz ID {quiz_id}.")
+                return
 
         answers = list(question.answers)
         images = list(question.images)
@@ -57,7 +60,8 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         if not options or not correct_indices:
             logging.warning(f"commands/question - Question {question.id}-{question.quiz.quiz_id} | ({question.areas}) has no answers or correct answer defined for user @{username}")
-            return await update.message.reply_text(f"No valid question found for question ID {question_id} in quiz ID {quiz_id}.")
+            await update.message.reply_text(f"No valid question found for question ID {question.id} in quiz ID {question.quiz.quiz_id}.")
+            return
         
         # Send question text and any associated images
         if len(images) == 1:
