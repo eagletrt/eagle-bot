@@ -17,14 +17,14 @@ async def qr(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     
     # Whitelist check
-    if username not in context.bot_data['config']['Whitelist']['QRcode']:
+    if not context.bot_data['whitelist'].is_user_whitelisted(username, context.bot_data['config']['Whitelist']['General']):
         logging.warning(f"commands/qr - Unauthorized /qr attempt by @{username}")
         return
     
     # Check if the command is used in a group where QR codes are allowed
     chat_id = str(update.effective_chat.id)
     if chat_id not in context.bot_data['config']['Whitelist']['QRcodeGroups']:
-        logging.warning(f"commands/qr - Unauthorized /qr attempt in group {chat_id} by @{username}")
+        logging.warning(f"commands/qr - Unauthorized /qr attempt in group/chat {chat_id} by @{username}")
         await update.message.reply_text("QR code generation is only allowed in E-Agle groups.")
         return
 

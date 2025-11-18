@@ -17,6 +17,11 @@ async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         logging.warning("commands/odg - User without username attempted to use /odg command")
         await update.message.reply_html("You need a Telegram username to use this command.")
         return
+    
+    # Whitelist check
+    if not context.bot_data['whitelist'].is_user_whitelisted(username, context.bot_data['config']['Whitelist']['General']):
+        logging.warning(f"commands/qr - Unauthorized /qr attempt by @{username}")
+        return
 
     # Get chat and thread identifiers
     chat_id = update.effective_chat.id

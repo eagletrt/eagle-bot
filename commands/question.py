@@ -19,6 +19,11 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_html("You need a Telegram username to use this command.")
         return
     
+    # Whitelist check
+    if not context.bot_data['whitelist'].is_user_whitelisted(username, context.bot_data['config']['Whitelist']['General']):
+        logging.warning(f"commands/qr - Unauthorized /qr attempt by @{username}")
+        return
+    
     # Remove bot mention if present and trim whitespace
     text = update.message.text
     text = text.replace("@eagletrtbot", "").strip()

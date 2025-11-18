@@ -181,7 +181,7 @@ def main() -> None:
         logging.info("main/main - Whitelist feature enabled.")
 
     # Conditional registration of info command
-    if config['Features']['InfoCommand'] and config['Features']['Whitelist']:
+    if config['Features']['InfoCommand']:
         application.add_handler(CommandHandler("info", info))
         logging.info("main/main - Info command enabled and handler registered.")
 
@@ -199,7 +199,7 @@ def main() -> None:
         logging.info("main/main - Eagle API integration enabled and handlers registered.")
 
     # Conditional registration of QR code generator handler
-    if config['Features']['QRcodeGenerator'] and config['Features']['Whitelist']:
+    if config['Features']['QRcodeGenerator']:
         shlink_api = ShlinkAPI(config['Settings']['SHLINK_API_URL'], os.getenv("SHLINK_API_KEY"))
         application.bot_data["shlink_api"] = shlink_api
         application.add_handler(CommandHandler("qr", qr))
@@ -208,15 +208,12 @@ def main() -> None:
     # Conditional registration of quiz-related handlers
     if config['Features']['FSQuiz']:
         application.add_handler(CommandHandler("question", question))
-        logging.info("main/main - Quiz feature enabled and handler registered.")
-
-    if config['Features']['FSQuiz'] and config['Features']['Whitelist']:
         application.add_handler(CommandHandler("quiz", quiz))
         application.add_handler(CommandHandler("quizzes", quizzes))
         application.add_handler(CommandHandler("event", event))
         application.add_handler(CommandHandler("events", events))
         application.add_handler(CommandHandler("answer", answer))
-        logging.info("main/main - Quiz admin features enabled and handlers registered.")
+        logging.info("main/main - Quiz feature enabled and handler registered.")
 
     if config['Features']['FSQuizLogging'] and config['Features']['FSQuiz'] and config['Features']['NocoDBIntegration']:
         application.add_handler(PollAnswerHandler(question_answer))

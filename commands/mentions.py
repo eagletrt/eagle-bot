@@ -15,6 +15,11 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if not username:
         logging.warning("commands/mentions - User without username attempted to use mention handler")
         return
+    
+    # Whitelist check
+    if not context.bot_data['whitelist'].is_user_whitelisted(username, context.bot_data['config']['Whitelist']['General']):
+        logging.warning(f"commands/qr - Unauthorized /qr attempt by @{username}")
+        return
 
     # Guard: skip if there's no text (e.g. stickers, images)
     msg = update.message

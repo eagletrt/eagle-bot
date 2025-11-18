@@ -17,8 +17,8 @@ async def info(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     
     # Whitelist check
-    if username not in context.bot_data['config']['Whitelist']['QRcode']:
-        logging.warning(f"commands/info - Unauthorized /info attempt by @{username}")
+    if not context.bot_data['whitelist'].is_user_whitelisted(username, context.bot_data['config']['Whitelist']['General']):
+        logging.warning(f"commands/qr - Unauthorized /qr attempt by @{username}")
         return
 
     logging.info(f"commands/info - /info command used by @{username}")

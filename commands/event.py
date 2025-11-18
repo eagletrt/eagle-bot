@@ -19,8 +19,8 @@ async def event(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     
     # Whitelist check
-    if username not in context.bot_data['config']['Whitelist']['QuizDB']:
-        logging.warning(f"commands/event - Unauthorized /event attempt by @{username}")
+    if not context.bot_data['whitelist'].is_user_whitelisted(username, context.bot_data['config']['Whitelist']['Quiz']):
+        logging.warning(f"commands/qr - Unauthorized /qr attempt by @{username}")
         return
     
     # Remove bot mention if present and trim whitespace
