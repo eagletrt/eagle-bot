@@ -26,12 +26,13 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     text = msg.text.lower()
     found_tags = set(re.findall(r'@[\w\.-]+', text))
     if not found_tags:
-        logging.info(f"No tags found in message from @{username}: {text}")
         return
 
     # Load NocoDB and tag cache from bot data
     nocodb = context.bot_data["nocodb"]
     tag_cache = context.bot_data["tag_cache"]
+
+    message = f""
 
     # Iterate found tags and handle each; replies the list of members for matched tags
     for tag in found_tags:
@@ -56,17 +57,10 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 for email in inlab_data['people']
             ]
 
-            # Log the in-lab data for debugging
-            logging.info(f"commands/mentions - User @{username} requested correctly in-lab data: {inlab_data}")
-
-            # Reply with a message depending on the count
             if inlab_data['count'] == 0:
-                await update.message.reply_html("Nobody is in the lab right now.")
+                members = []
             else:
-                await update.message.reply_html(
-                    f"There are <b>{inlab_data['count']}</b> people in the lab: {', '.join(tags)}"
-                )
-            return
+                members = tags
         elif tag in tag_cache.get("areas", []):
             members = nocodb.members(tag.lstrip('@'), "area")
         elif tag in tag_cache.get("workgroups", []):
@@ -83,5 +77,9 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         # If members found, reply with an HTML-formatted list
         if members:
             tag_list = ' '.join(members)
-            await msg.reply_html(f"<b>{tag}</b>:\n{tag_list}")
-            return
+            message = message + f"<b>{tag}</b>:\n{tag_list}\n\n"
+        
+    # If we have a message to send, reply with it
+    if message != "":
+        await update.message.reply_html(message)
+    return

@@ -1,4 +1,4 @@
-# T.E.C.S. - 3.2
+# T.E.C.S.
 
 **Eagle-Bot** is a multi-function Telegram bot designed for the E-Agle TRT team. It simplifies task management, interaction with external databases, and monitoring of lab attendance, acting as a digital assistant for the team.
 

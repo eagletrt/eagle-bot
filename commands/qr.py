@@ -20,6 +20,13 @@ async def qr(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if username not in context.bot_data['config']['Whitelist']['QRcode']:
         logging.warning(f"commands/qr - Unauthorized /qr attempt by @{username}")
         return
+    
+    # Check if the command is used in a group where QR codes are allowed
+    chat_id = str(update.effective_chat.id)
+    if chat_id not in context.bot_data['config']['Whitelist']['QRcodeGroups']:
+        logging.warning(f"commands/qr - Unauthorized /qr attempt in group {chat_id} by @{username}")
+        await update.message.reply_text("QR code generation is only allowed in E-Agle groups.")
+        return
 
     # Remove bot mention if present and trim whitespace
     text = update.message.text
@@ -30,6 +37,13 @@ async def qr(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Parse arguments: first is URL, second (optional) is custom code
     url = text.split(' ')[1] if text.count(' ') >= 1 else None
     code = text.split(' ')[2] if text.count(' ') >= 2 else None
+
+    # Ensure URL starts with https://
+    if url and not url.startswith(('https://')):
+        if url.startswith(('http://')):
+            url = url.replace('http://', 'https://')
+        else:
+            url = 'https://' + url
 
     if not url:
         logging.warning(f"commands/qr - User @{username} did not provide a URL for QR code generation")

@@ -9,6 +9,7 @@ SHLINK_API_URL = 'https://shlink.domain.com' # URL of the Shlink API
 [Whitelist]
 QuizDB = ['user1', 'user2'] # Telegram usernames allowed to use quiz admin features
 QRcode = ['user1', 'user2'] # Telegram usernames allowed to use QR code features
+QRcodeGroups = ['-GroupID', '-GroupID'] # List of Telegram group IDs where QR code features are allowed
 
 [Features]
 EAgleAPIIntegration = false # Enable or disable integration with the Eagle API
