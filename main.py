@@ -24,7 +24,7 @@ from commands.events import events
 from commands.question import question
 from commands.question_answer import question_answer
 from commands.answer import answer
-from commands.info import info
+from commands.id import id
 
 # Color codes used for coloring log output in console only
 COLORS = {
@@ -181,8 +181,8 @@ def main() -> None:
         logging.info("main/main - Whitelist feature enabled.")
 
     # Conditional registration of info command
-    if config['Features']['InfoCommand']:
-        application.add_handler(CommandHandler("info", info))
+    if config['Features']['IDCommand']:
+        application.add_handler(CommandHandler("id", id))
         logging.info("main/main - Info command enabled and handler registered.")
 
     # Conditional registration of ODG command
