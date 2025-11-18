@@ -23,6 +23,7 @@ from commands.events import events
 from commands.question import question
 from commands.question_answer import question_answer
 from commands.answer import answer
+from commands.info import info
 
 # Color codes used for coloring log output in console only
 COLORS = {
@@ -172,6 +173,11 @@ def main() -> None:
         application.add_handler(CommandHandler("tags", tags))
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, mention_handler))
         logging.info("main/main - Mention handler and /tags command enabled and handlers registered.")
+
+    # Conditional registration of info command
+    if config['Features']['InfoCommand']:
+        application.add_handler(CommandHandler("info", info))
+        logging.info("main/main - Info command enabled and handler registered.")
 
     # Conditional registration of ODG command
     if config['Features']['ODGCommand']:

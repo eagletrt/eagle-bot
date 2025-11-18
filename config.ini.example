@@ -15,6 +15,7 @@ QRcodeGroups = ['-GroupID', '-GroupID'] # List of Telegram group IDs where QR co
 EAgleAPIIntegration = false # Enable or disable integration with the Eagle API
 NocoDBIntegration = false # Enable or disable NocoDB integration (tags, mentions, inlab, quiz logging)
 ODGCommand = false # Enable or disable the /odg command
+InfoCommand = false # Enable or disable the /info command
 MentionHandler = false # Enable or disable the mention handler (/tags command && mention responses)
 QRcodeGenerator = false # Enable or disable the QR code generator feature
 FSQuiz = false # Enable or disable the quiz feature
