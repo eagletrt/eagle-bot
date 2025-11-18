@@ -65,6 +65,10 @@ async def ps(application: Application) -> None:
         setup_scheduler(application)
         logging.info("main/main - Scheduled quiz sends enabled.")
 
+    if application.bot_data["config"]['Features']['Whitelist'] and application.bot_data["config"]['Features']['NocoDBIntegration'] and application.bot_data["config"]['Features']['MentionHandler']:
+        application.bot_data["whitelist"] = Whitelist(application)
+        logging.info("main/main - Whitelist feature enabled.")
+
     commands = []
 
     # Conditional addition of mention handler command
@@ -174,11 +178,6 @@ def main() -> None:
         application.add_handler(CommandHandler("tags", tags))
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, mention_handler))
         logging.info("main/main - Mention handler and /tags command enabled and handlers registered.")
-
-    if config['Features']['Whitelist'] and config['Features']['NocoDBIntegration'] and config['Features']['MentionHandler']:
-        wh = Whitelist(tag_cache, nocodb)
-        application.bot_data["whitelist"] = wh
-        logging.info("main/main - Whitelist feature enabled.")
 
     # Conditional registration of info command
     if config['Features']['IDCommand']:

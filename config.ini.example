@@ -8,6 +8,7 @@ SHLINK_API_URL = 'https://shlink.domain.com' # URL of the Shlink API
 
 [Whitelist]
 General = ['@everyone'] # Telegram usernames allowed bot access
+cron = '0 4 * * *' # Cron schedule for refreshing the whitelist (default: daily at 4 AM)
 Quiz = ['@it', '@sw', '@user123'] # Telegram usernames allowed to use quiz admin features
 QRcodeGroups = ['-GroupID', '-GroupID'] # List of Telegram group IDs where QR code features are allowed
 

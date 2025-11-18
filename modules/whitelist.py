@@ -1,17 +1,30 @@
 import logging
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 class Whitelist:
     """ Manages user whitelisting based on tags from NocoDB. """
     
-    def __init__(self, tag_cache: dict[str, list[str]], nocodb):
+    def __init__(self, application):
         """ Initialize the Whitelist with tag cache and NocoDB client. """
 
         self.whitelist: dict[str, list[str]] = {}
-        self.tag_cache = tag_cache
-        self.nocodb = nocodb
+        self.tag_cache = application.bot_data['tag_cache']
+        self.nocodb = application.bot_data['nocodb']
         self._update_cache()
 
-        logging.info("modules/whitelist - Whitelist initialized and cache populated.")
+        scheduler = AsyncIOScheduler()
+
+        cron = application.bot_data['config']['Whitelist']['cron']
+
+        scheduler.add_job(
+            self._update_cache,
+            'cron',
+            **{field: value for field, value in zip(['minute', 'hour', 'day', 'month', 'day_of_week'], cron.split())}
+        )
+
+        scheduler.start()
+
+        logging.info("modules/whitelist - Whitelist initialized and refresh scheduled with cron: " + cron)
         
     def _update_cache(self) -> None:
         """ Update the whitelist cache from NocoDB. """
