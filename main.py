@@ -4,6 +4,7 @@ import tomllib
 from modules.nocodb import NocoDB
 from modules.api_client import EagleAPI
 from modules.shlink import ShlinkAPI
+from modules.whitelist import Whitelist
 from telegram import Update, BotCommand
 from telegram.ext import Application, CommandHandler, MessageHandler, PollAnswerHandler, filters
 from modules.scheduler import setup_scheduler
@@ -174,8 +175,13 @@ def main() -> None:
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, mention_handler))
         logging.info("main/main - Mention handler and /tags command enabled and handlers registered.")
 
+    if config['Features']['Whitelist'] and config['Features']['NocoDBIntegration'] and config['Features']['MentionHandler']:
+        wh = Whitelist(tag_cache, nocodb)
+        application.bot_data["whitelist"] = wh
+        logging.info("main/main - Whitelist feature enabled.")
+
     # Conditional registration of info command
-    if config['Features']['InfoCommand']:
+    if config['Features']['InfoCommand'] and config['Features']['Whitelist']:
         application.add_handler(CommandHandler("info", info))
         logging.info("main/main - Info command enabled and handler registered.")
 
@@ -193,7 +199,7 @@ def main() -> None:
         logging.info("main/main - Eagle API integration enabled and handlers registered.")
 
     # Conditional registration of QR code generator handler
-    if config['Features']['QRcodeGenerator']:
+    if config['Features']['QRcodeGenerator'] and config['Features']['Whitelist']:
         shlink_api = ShlinkAPI(config['Settings']['SHLINK_API_URL'], os.getenv("SHLINK_API_KEY"))
         application.bot_data["shlink_api"] = shlink_api
         application.add_handler(CommandHandler("qr", qr))
@@ -201,14 +207,20 @@ def main() -> None:
 
     # Conditional registration of quiz-related handlers
     if config['Features']['FSQuiz']:
+        application.add_handler(CommandHandler("question", question))
+        logging.info("main/main - Quiz feature enabled and handler registered.")
+
+    if config['Features']['FSQuiz'] and config['Features']['Whitelist']:
         application.add_handler(CommandHandler("quiz", quiz))
         application.add_handler(CommandHandler("quizzes", quizzes))
         application.add_handler(CommandHandler("event", event))
         application.add_handler(CommandHandler("events", events))
-        application.add_handler(CommandHandler("question", question))
-        application.add_handler(PollAnswerHandler(question_answer))
         application.add_handler(CommandHandler("answer", answer))
-        logging.info("main/main - Quiz feature enabled and handlers registered.")
+        logging.info("main/main - Quiz admin features enabled and handlers registered.")
+
+    if config['Features']['FSQuizLogging'] and config['Features']['FSQuiz'] and config['Features']['NocoDBIntegration']:
+        application.add_handler(PollAnswerHandler(question_answer))
+        logging.info("main/main - Quiz logging enabled and handlers registered.")
 
     # Start polling
     application.run_polling(allowed_updates=Update.ALL_TYPES)
