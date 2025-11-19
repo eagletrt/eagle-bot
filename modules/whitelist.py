@@ -76,8 +76,6 @@ class Whitelist:
             elif tag in self.whitelist and username in self.whitelist[tag]:
                 return True
             
-        # asyncio.create_task(self._update_cache())
-            
         return False
 
     def members_cache(self, tag: str) -> list[str]:
@@ -85,7 +83,5 @@ class Whitelist:
         
         if tag in self.whitelist:
             return self.whitelist[tag]
-        
-        # asyncio.create_task(self._update_cache())
         
         return []
