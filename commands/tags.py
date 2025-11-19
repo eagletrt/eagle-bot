@@ -18,7 +18,7 @@ async def tags(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     # Whitelist check
     if context.bot_data['config']['Features']['Whitelist'] and not context.bot_data['whitelist'].is_user_whitelisted(username, context.bot_data['config']['Whitelist']['General']):
-        logging.warning(f"commands/qr - Unauthorized /qr attempt by @{username}")
+        logging.warning(f"commands/tags - Unauthorized /tags attempt by @{username}")
         return
 
     # Access the tag cache from bot_data

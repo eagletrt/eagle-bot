@@ -20,7 +20,7 @@ async def quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     # Whitelist check
     if context.bot_data['config']['Features']['Whitelist'] and not context.bot_data['whitelist'].is_user_whitelisted(username, context.bot_data['config']['Whitelist']['Quiz']):
-        logging.warning(f"commands/qr - Unauthorized /qr attempt by @{username}")
+        logging.warning(f"commands/quiz - Unauthorized /quiz attempt by @{username}")
         return
     
     # Remove bot mention if present and trim whitespace

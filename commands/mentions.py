@@ -31,7 +31,7 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     
     # Whitelist check
     if context.bot_data['config']['Features']['Whitelist'] and not context.bot_data['whitelist'].is_user_whitelisted(username, context.bot_data['config']['Whitelist']['General']):
-        logging.warning(f"commands/qr - Unauthorized /qr attempt by @{username}")
+        logging.warning(f"commands/mentions - Unauthorized /mentions attempt by @{username}")
         return
 
     # Load NocoDB and tag cache from bot data
