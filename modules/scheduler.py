@@ -9,11 +9,13 @@ async def send_scheduled_question(bot, group_id, thread_id, area_code):
 
     with db_session:
 
-        question = Questions.select().random(1)[0]
-        areas = question.areas.split(" - ") if question.areas else []
-        while not question.isValid() or (area_code not in areas):
-            question = Questions.select().random(1)[0]
-            areas = question.areas.split(" - ") if question.areas else []
+        question = Questions.select(
+            lambda q: area_code in (area.name for area in q.areas)
+        ).random(1)[0]
+        while not question.isValid():
+            question = Questions.select(
+                lambda q: area_code in (area.name for area in q.areas)
+            ).random(1)[0]
 
         answers = list(question.answers)
         images = list(question.images)
@@ -56,7 +58,7 @@ async def send_scheduled_question(bot, group_id, thread_id, area_code):
                 text=f"{question.text}"
             )
 
-        logging.info(f"modules/scheduler - Scheduled question {question.id}-{question.quiz.quiz_id} | {question.areas} sent to group {group_id} in thread {thread_id}.")
+        logging.info(f"modules/scheduler - Scheduled question {question.id}-{question.quiz.quiz_id} | {area_code} sent to group {group_id} in thread {thread_id}.")
         
         # Send the poll with the question options
         message = await bot.send_poll(

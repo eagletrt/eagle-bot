@@ -45,7 +45,7 @@ class Questions(db.Entity):
     text = Required(str)  # The text of the question.
     type = Optional(str)  # The type of question (e.g., 'multiple_choice').
     position_index = Optional(int)  # The position of the question in the quiz.
-    areas = Optional(str)  # The area or category of the question.
+    areas = Set('Areas')  # The area or category this question belongs to.
     answers = Set('Answers')  # A collection of possible answers for this question.
     images = Set('Images')  # A collection of images associated with this question.
     polls = Set('Polls')  # A collection of polls associated with this question.
@@ -84,6 +84,12 @@ class Polls(db.Entity):
     poll_id = PrimaryKey(str)  # The unique identifier for the Telegram poll.
     question = Required(Questions)  # The question associated with this poll.
     correct_option = Required(int)  # The index of the correct option in the poll.
+
+class Areas(db.Entity):
+    """ Represents an area or category for questions. """
+
+    name = PrimaryKey(str)  # The name of the area.
+    questions = Set(Questions)  # A collection of questions associated with this area.
     
 # Generate mapping between the above entities and the actual database tables.
 db.generate_mapping(create_tables=True)
