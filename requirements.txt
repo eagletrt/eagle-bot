@@ -4,3 +4,4 @@ pony
 apscheduler
 qrcode
 Pillow
+httpx

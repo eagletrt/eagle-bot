@@ -1,6 +1,7 @@
 import os
 import logging
 import tomllib
+import asyncio
 from modules.nocodb import NocoDB
 from modules.api_client import EagleAPI
 from modules.shlink import ShlinkAPI
@@ -60,6 +61,17 @@ logging.basicConfig(level=logging.INFO, handlers=[console_handler])
 
 async def ps(application: Application) -> None:
     """Post-initialization hook to set bot commands and start scheduler if enabled."""
+
+    if application.bot_data["config"]['Features']['NocoDBIntegration']:
+        # Initialize tag cache
+        tag_cache = {
+            "areas": await application.bot_data['nocodb'].tags('area'),
+            "workgroups": await application.bot_data['nocodb'].tags('workgroup'),
+            "projects": await application.bot_data['nocodb'].tags('project'),
+            "roles": await application.bot_data['nocodb'].tags('role')
+        }
+        application.bot_data["tag_cache"] = tag_cache
+        logging.info("main/main - Tag cache initialized.")
 
     if application.bot_data["config"]['Features']['FSQuizScheduledSends']:
         setup_scheduler(application)

@@ -1,5 +1,6 @@
 import logging
 import re
+import asyncio
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -57,23 +58,23 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             inlab_data = eagle_api.inlab()
 
             # Convert emails to NocoDB usernames/tags using the nocodb helper
-            tags = [
+            tags = await asyncio.gather(*[
                 nocodb.username_from_email(email)
                 for email in inlab_data['people']
-            ]
+            ])
 
             if inlab_data['count'] == 0:
                 members = []
             else:
                 members = tags
         elif tag in tag_cache.get("areas", []):
-            members = nocodb.members(tag.lstrip('@'), "area")
+            members = await nocodb.members(tag.lstrip('@'), "area")
         elif tag in tag_cache.get("workgroups", []):
-            members = nocodb.members(tag.lstrip('@'), "workgroup")
+            members = await nocodb.members(tag.lstrip('@'), "workgroup")
         elif tag in tag_cache.get("projects", []):
-            members = nocodb.members(tag.lstrip('@'), "project")
+            members = await nocodb.members(tag.lstrip('@'), "project")
         elif tag in tag_cache.get("roles", []):
-            members = nocodb.members(tag.lstrip('@'), "role")
+            members = await nocodb.members(tag.lstrip('@'), "role")
         else:
             members = None
 

@@ -1,5 +1,6 @@
 import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import asyncio
 
 class Whitelist:
     """ Manages user whitelisting based on tags from NocoDB. """
@@ -10,7 +11,9 @@ class Whitelist:
         self.whitelist: dict[str, list[str]] = {}
         self.tag_cache = application.bot_data['tag_cache']
         self.nocodb = application.bot_data['nocodb']
-        self._update_cache()
+        
+        # run first cache update
+        asyncio.create_task(self._update_cache())
 
         scheduler = AsyncIOScheduler()
 
@@ -26,23 +29,35 @@ class Whitelist:
 
         logging.info("modules/whitelist - Whitelist initialized and refresh scheduled with cron: " + cron)
         
-    def _update_cache(self) -> None:
+    async def _update_cache(self) -> None:
         """ Update the whitelist cache from NocoDB. """
 
-        for area in self.tag_cache.get("areas", []):
-            self.whitelist[area] = self.nocodb.members(area.lstrip("@"), 'area')
-        for workgroup in self.tag_cache.get("workgroups", []):
-            self.whitelist[workgroup] = self.nocodb.members(workgroup.lstrip("@"), 'workgroup')
-        for project in self.tag_cache.get("projects", []):
-            self.whitelist[project] = self.nocodb.members(project.lstrip("@"), 'project')
-        for role in self.tag_cache.get("roles", []):
-            self.whitelist[role] = self.nocodb.members(role.lstrip("@"), 'role')
+        tasks = []
+        tag_map = []
+
+        tag_types = {
+            "areas": "area",
+            "workgroups": "workgroup",
+            "projects": "project",
+            "roles": "role"
+        }
+
+        for tag_key, tag_type in tag_types.items():
+            for tag in self.tag_cache.get(tag_key, []):
+                tasks.append(self.nocodb.members(tag.lstrip("@"), tag_type))
+                tag_map.append(tag)
+
+        results = await asyncio.gather(*tasks)
+
+        new_whitelist = dict(zip(tag_map, results))
 
         # Create @everyone by merging all members from all tags
         all_members = set()
-        for member_list in self.whitelist.values():
+        for member_list in new_whitelist.values():
             all_members.update(member_list)
-        self.whitelist["@everyone"] = list(all_members)
+        new_whitelist["@everyone"] = list(all_members)
+
+        self.whitelist = new_whitelist
 
         logging.info("modules/whitelist - Whitelist cache updated from NocoDB.")
 
@@ -61,10 +76,6 @@ class Whitelist:
             elif tag in self.whitelist and username in self.whitelist[tag]:
                 return True
             
-        # Refresh cache and recheck
-        self._update_cache()
-        for tag in tags:
-            if tag in self.whitelist and username in self.whitelist[tag]:
-                return True
+        asyncio.create_task(self._update_cache())
             
         return False
