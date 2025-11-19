@@ -16,18 +16,18 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     if not username:
         logging.warning("commands/mentions - User without username attempted to use mention handler")
         return
-    
-    # Find all mentions like @username or @tag (letters, digits, underscore, dot, hyphen allowed)
-    text = msg.text.lower()
-    found_tags = set(re.findall(r'@[\w\.-]+', text))
-    if not found_tags:
-        return
-    
+
     # Guard: skip if there's no text (e.g. stickers, images)
     msg = update.message
     if not msg or not msg.text:
         logging.info(f"Message from @{username} has no text to process.")
         return
+    
+    # Find all mentions like @username or @tag (letters, digits, underscore, dot, hyphen allowed)
+    text = msg.text.lower()
+    found_tags = set(re.findall(r'@[\w\.-]+', text))
+    if not found_tags:
+        return    
     
     # Whitelist check
     if context.bot_data['config']['Features']['Whitelist'] and not context.bot_data['whitelist'].is_user_whitelisted(username, context.bot_data['config']['Whitelist']['General']):
