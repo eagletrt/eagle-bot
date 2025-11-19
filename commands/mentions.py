@@ -37,6 +37,7 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     # Load NocoDB and tag cache from bot data
     nocodb = context.bot_data["nocodb"]
     tag_cache = context.bot_data["tag_cache"]
+    whitelist = context.bot_data["whitelist"]
 
     message = f""
 
@@ -67,14 +68,8 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 members = []
             else:
                 members = tags
-        elif tag in tag_cache.get("areas", []):
-            members = await nocodb.members(tag.lstrip('@'), "area")
-        elif tag in tag_cache.get("workgroups", []):
-            members = await nocodb.members(tag.lstrip('@'), "workgroup")
-        elif tag in tag_cache.get("projects", []):
-            members = await nocodb.members(tag.lstrip('@'), "project")
-        elif tag in tag_cache.get("roles", []):
-            members = await nocodb.members(tag.lstrip('@'), "role")
+        elif tag in tag_cache['areas'] or tag in tag_cache['workgroups'] or tag in tag_cache['projects'] or tag in tag_cache['roles']:
+            members = whitelist.members_cache(tag)
         else:
             members = None
 
