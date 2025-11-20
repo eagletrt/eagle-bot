@@ -29,31 +29,47 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     text = text.replace("@eagletrtbot", "").strip()
 
     # Extract question ID from the command text
-    id = text.split(' ', 1)[1] if ' ' in text else None
+    val = text.split(' ')[1] if ' ' in text else None
 
     with db_session:
-        if not id:
+        if val:
+            if re.fullmatch(r"\d+-\d+", val):
+                # If the parameter looks like an ID, use it (numeric-numeric).
+                id = val                
+                id_parts = id.split('-', 1)
+                question_id = id_parts[0]
+                quiz_id = id_parts[1]
+
+                question = Questions.get(id=question_id, quiz=quiz_id)
+                if not question or not question.isValid():
+                    logging.info(f"commands/question - No valid question found for question ID {question_id} in quiz ID {quiz_id} for user @{username}")
+                    await update.message.reply_text(f"No valid question found for question ID {question_id} in quiz ID {quiz_id}.")
+                    return
+
+            elif re.fullmatch(r"[A-Za-z]+", val):
+                # If the parameter looks like an area, fetch a random question from that area.
+                area_code = val.upper()
+
+                if area_code not in context.bot_data['areas']:
+                    logging.info(f"commands/question - Invalid area parameter from @{username}: {area_code}")
+                    await update.message.reply_text("Please provide a valid question ID in the format <question_id>-<quiz_id> or a valid area name.")
+                    return
+
+                question = Questions.select(lambda q: area_code in (area.name for area in q.areas)).random(1)[0]
+                while not question.isValid():
+                    question = Questions.select(lambda q: area_code in (area.name for area in q.areas)).random(1)[0]
+
+            else:
+                logging.info(f"commands/question - Invalid parameter from @{username}: {val}")
+                await update.message.reply_text("Please provide a valid question ID in the format <question_id>-<quiz_id> or a valid area name.")
+                return
+
+        else:
             # If no ID, fetch a random valid question.
             # The loop ensures that a question with answers and images is selected.
             question = Questions.select().random(1)[0]
             while not question.isValid():
                 question = Questions.select().random(1)[0]
-        else:
-            # If an ID is provided, parse it and fetch the specific question.
-            if not id or not re.fullmatch(r"\d+-\d+", id):
-                logging.info(f"commands/question - Invalid question ID format from @{username}: {id}")
-                await update.message.reply_text("Please provide a valid question ID in the format <question_id>-<quiz_id>.")
-                return
-            
-            id_parts = id.split('-', 1)
-            question_id = id_parts[0]
-            quiz_id = id_parts[1]
-
-            question = Questions.get(id=question_id, quiz=quiz_id)
-            if not question or not question.isValid():
-                logging.info(f"commands/question - No valid question found for question ID {question_id} in quiz ID {quiz_id} for user @{username}")
-                await update.message.reply_text(f"No valid question found for question ID {question_id} in quiz ID {quiz_id}.")
-                return
 
         answers = list(question.answers)
         images = list(question.images)

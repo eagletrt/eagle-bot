@@ -217,6 +217,9 @@ def main() -> None:
         application.add_handler(CommandHandler("event", event))
         application.add_handler(CommandHandler("events", events))
         application.add_handler(CommandHandler("answer", answer))
+        application.bot_data["areas"] = {
+            "DMT", "HW", "MGT", "MT", "SW", "CM"
+        }
         logging.info("main/main - Quiz feature enabled and handler registered.")
 
     if config['Features']['FSQuizLogging'] and config['Features']['FSQuiz'] and config['Features']['NocoDBIntegration']:
