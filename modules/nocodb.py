@@ -77,6 +77,8 @@ class NocoDB:
             params=params
         )
 
+        res.raise_for_status()
+
         items = res.json().get("list")
         return [item["Telegram Username"] for item in items if item.get("Telegram Username")]
 

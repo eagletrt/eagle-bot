@@ -39,7 +39,7 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     tag_cache = context.bot_data["tag_cache"]
     whitelist = context.bot_data["whitelist"]
 
-    message = f""
+    message = ""
 
     # Iterate found tags and handle each; replies the list of members for matched tags
     for tag in found_tags:

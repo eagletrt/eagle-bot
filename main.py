@@ -1,7 +1,6 @@
 import os
 import logging
 import tomllib
-import asyncio
 from modules.nocodb import NocoDB
 from modules.api_client import EagleAPI
 from modules.shlink import ShlinkAPI
@@ -217,9 +216,7 @@ def main() -> None:
         application.add_handler(CommandHandler("event", event))
         application.add_handler(CommandHandler("events", events))
         application.add_handler(CommandHandler("answer", answer))
-        application.bot_data["areas"] = {
-            "DMT", "HW", "MGT", "MT", "SW", "CM"
-        }
+        application.bot_data["areas"] = config['Settings']['areas']
         logging.info("main/main - Quiz feature enabled and handler registered.")
 
     if config['Features']['FSQuizLogging'] and config['Features']['FSQuiz'] and config['Features']['NocoDBIntegration']:

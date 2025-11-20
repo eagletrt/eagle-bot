@@ -1,6 +1,7 @@
 import logging
 from telegram import Update
 from telegram.ext import ContextTypes
+import asyncio
 
 async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Reports who is currently in the lab."""
@@ -32,10 +33,9 @@ async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     inlab_data = eagle_api.inlab()
 
     # Convert emails to NocoDB usernames/tags using the nocodb helper
-    tags = [
-        nocodb.username_from_email(email)
-        for email in inlab_data['people']
-    ]
+    tags = await asyncio.gather(
+        *[nocodb.username_from_email(email) for email in inlab_data['people']]
+    )
 
     # Log the in-lab data for debugging
     logging.info(f"commands/inlab - User @{username} requested correctly in-lab data: {inlab_data}")
