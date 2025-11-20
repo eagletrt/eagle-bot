@@ -66,7 +66,6 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
         else:
             # If no ID, fetch a random valid question.
-            # The loop ensures that a question with answers and images is selected.
             question = Questions.select().random(1)[0]
             while not question.isValid():
                 question = Questions.select().random(1)[0]
