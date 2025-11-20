@@ -36,15 +36,16 @@
 
 The bot is built on a modular architecture that separates responsibilities into distinct components:
 
-1.  **Core (`main.py`)**: This is the application's entry point. It manages the bot's lifecycle, initializes clients for external APIs, and registers command and mention handlers.
+1.  **Core (`main.py`)**: This is the application's entry point. It manages the bot's lifecycle, initializes clients for external APIs, and registers command and mention handlers based on the configuration.
 2.  **Command Handlers (`/commands`)**: Each file in this directory implements the logic for a specific command (e.g., `/odg`, `/inlab`). This approach keeps the code organized and easy to extend.
 3.  **Modules (`/modules`)**: Contains clients and wrappers for interacting with external services and the local database.
     - `nocodb.py`: Client for NocoDB APIs.
     - `api_client.py`: Client for E-Agle's internal APIs.
     - `database.py`: Manager for the local database (SQLite with Pony ORM).
     - `quiz.py`: Logic for quiz management.
-    - `scheduler.py`: For executing scheduled tasks.
-4.  **Persistent Data (`/data`)**: A directory mounted as a Docker volume to store the SQLite database and log files.
+    - `scheduler.py`: For running scheduled tasks.
+4.  **Persistent Data (`/data`)**: A directory mounted as a Docker volume to store the SQLite database, log files, and configuration.
+5.  **Configuration (`config.ini`)**: A central configuration file that allows enabling or disabling features (feature flags) and customizing bot settings without modifying the code.
 
 ## Project Structure
 
@@ -62,7 +63,8 @@ The bot is built on a modular architecture that separates responsibilities into 
 │   └── ...
 ├── main.py           # Application entrypoint
 ├── requirements.txt  # Python dependencies
-├── Dockerfile        # Instructions for building the Docker image
+├── Dockerfile        # Instructions to build the Docker image
+├── config.ini.example # Example configuration file
 └── README.md         # This documentation
 ```
 
@@ -91,10 +93,19 @@ The bot is built on a modular architecture that separates responsibilities into 
     pip install -r requirements.txt
     ```
 
-3.  **Configure environment variables:**
-    Create a `.env` file in the project root or export the required variables (see [Configuration](#configuration)).
+3.  **Configure the bot:**
+    Create a copy of the `config.ini.example` file, rename it to `config.ini`, and move it to the `data/` folder. Modify the values inside according to your needs.
 
-4.  **Start the bot:**
+4.  **Export the required environment variables:**
+    API keys and tokens should not be placed in the configuration file but exported as environment variables for security.
+
+    ```bash
+    export TELEGRAM_BOT_TOKEN="your_token"
+    export NOCO_API_KEY="your_api_key"
+    export SHLINK_API_KEY="your_api_key"
+    ```
+
+5.  **Start the bot:**
     ```bash
     python main.py
     ```
@@ -103,8 +114,11 @@ The bot is built on a modular architecture that separates responsibilities into 
 
 The recommended way to run the bot in production is via Docker, to ensure an isolated environment and simplified management.
 
-1.  **Configure environment variables:**
-    Create a `.env` file in the project root. Docker Compose will automatically use it to populate environment variables in the container.
+1.  **Create the configuration file:**
+    Create the `data` folder if it doesn't exist, then create the `data/config.ini` file from `config.ini.example` and customize it.
+
+2.  **Create a `.env` file:**
+    Create a `.env` file in the project root for environment variables. Docker Compose will automatically use it to populate them in the container.
 
     ```env
     TELEGRAM_BOT_TOKEN=...
@@ -112,38 +126,51 @@ The recommended way to run the bot in production is via Docker, to ensure an iso
     SHLINK_API_KEY=...
     ```
 
-2.  **Build and start the container:**
+3.  **Start the container:**
     ```bash
     docker compose up --build -d
     ```
 
 ## Configuration
 
+The bot's configuration is managed through the `data/config.ini` file, which allows you to customize the bot's behavior without modifying the source code.
+
 ### Environment Variables
 
-The following environment variables are required for the bot to function correctly:
+The following environment variables are **mandatory** for authentication with external services:
 
-| Variable             | Description                               |
-| -------------------- | ----------------------------------------- |
-| `TELEGRAM_BOT_TOKEN` | Authentication token for the Telegram bot. |
-| `NOCO_API_KEY`       | API key for authentication with NocoDB.   |
-| `SHLINK_API_KEY`     | API key for authentication with Shlink.   |
+| Variable             | Description                                  |
+| -------------------- | -------------------------------------------- |
+| `TELEGRAM_BOT_TOKEN` | Authentication token for the Telegram bot.   |
+| `NOCO_API_KEY`       | API key for authentication with NocoDB.      |
+| `SHLINK_API_KEY`     | API key for authentication with Shlink.      |
+
+### `config.ini` File
+
+This file is divided into sections:
+
+- **`[Settings]`**: Contains general settings like API URLs, log levels, and quiz areas.
+- **`[Paths]`**: Defines the paths for log files and the database.
+- **`[Features]`**: Allows you to enable or disable bot features (e.g., `ODGCommand`, `FSQuiz`). Setting a value to `false` will prevent the corresponding command or feature from being loaded.
 
 ## Usage
 
 ### Available Commands
 
-| Command    | Description                                      | Example                             |
-| ---------- | ------------------------------------------------ | ----------------------------------- |
-| `/start`   | Shows a welcome message.                         | `/start`                            |
-| `/odg`     | Manages the Agenda (ODG).                        | `/odg`, `/odg <task>`, `/odg reset` |
-| `/tags`    | Shows available tags (areas, projects, etc.).    | `/tags`                             |
-| `/inlab`   | Shows who is currently in the lab.               | `/inlab`                            |
-| `/ore`     | Shows the monthly hours for each member.         | `/ore`                              |
-| `/quiz`    | Starts or manages a quiz.                        | `/quiz <id>`                        |
-| `/quizzes` | Lists all available quizzes.                     | `/quizzes`                          |
-| `/qr`      | Generates a QR code from the provided text.      | `/qr https://example.com`           |
-| `/events`  | Shows upcoming events.                           | `/events`                           |
+| Command     | Description                                             | Example                             |
+| ----------- | ------------------------------------------------------- | ----------------------------------- |
+| `/start`    | Shows a welcome message.                                | `/start`                            |
+| `/odg`      | Manages the Agenda (ODG).                               | `/odg`, `/odg <task>`, `/odg reset` |
+| `/tags`     | Shows available tags (areas, projects, etc.).           | `/tags`                             |
+| `/inlab`    | Shows who is currently in the lab.                      | `/inlab`                            |
+| `/ore`      | Shows the monthly hours for each member.                | `/ore`                              |
+| `/quiz`     | Starts or manages a quiz.                               | `/quiz <id>`                        |
+| `/quizzes`  | Lists all available quizzes.                            | `/quizzes`                          |
+| `/question` | Sends a random question from a specific area.           | `/question <area>`                  |
+| `/answer`   | Allows answering an open-ended question.                | `/answer <text>`                    |
+| `/qr`       | Generates a QR code from the provided text.             | `/qr https://example.com`           |
+| `/events`   | Shows upcoming events.                                  | `/events`                           |
+| `/id`       | Shows the current chat ID and your user ID.             | `/id`                               |
 
 ### Mentions
 
@@ -158,11 +185,14 @@ You can mention a tag (previously configured in NocoDB) to notify all associated
 
 ### Logging
 
-- Logs of level `INFO` and higher are printed to the console with colored output.
-- Logs of level `WARNING` and higher are saved to the `/data/bot.log` file inside the container.
+The logging system is configurable via the `config.ini` file:
+
+- **`ConsoleLogLevel`**: Sets the log level for console output (e.g., `INFO`, `DEBUG`). Console logs are colored for better readability.
+- **`FileLogLevel`**: Sets the log level for saving to a file (e.g., `WARNING`, `ERROR`).
+- **`LogFilePath`**: Specifies the path to the log file (e.g., `data/bot.log`).
 
 ### Database
 
 - The bot uses an **SQLite** database (`/data/eagletrtbot.db`) for persisting data related to the agenda and quizzes.
-- Interaction with the database is managed via **Pony ORM**, which abstracts SQL queries and simplifies entity management.
+- Interaction with the database is handled via **Pony ORM**, which abstracts SQL queries and simplifies entity management.
 - The database file is created automatically on the first run.
