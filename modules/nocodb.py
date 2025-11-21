@@ -1,125 +1,66 @@
-"""
-nocodb.py
+import httpx
+import tomllib
+import logging
 
-Lightweight wrapper around a NocoDB instance used by the eagle-bot project.
-
-This module provides:
-- NocoDB: a small client that queries specific tables/links in a NocoDB API.
-- Methods to list tags (areas, workgroups, projects, roles).
-- Methods to resolve members for a given tag (returning Telegram usernames).
-- Helpers to map between Telegram username and team email.
-
-Notes:
-- Uses requests.Session for connection reuse and to set the 'xc-token' header for auth.
-- Assumes specific table IDs and link IDs hard-coded in the queries.
-- No advanced error handling is implemented — network or API errors will raise requests exceptions
-    or KeyError/IndexError if the API response shape differs.
-"""
-
-import requests
-
+# Load configuration from config.ini
+with open("data/config.ini", "rb") as f:
+    try:
+        config = tomllib.load(f)
+    except tomllib.TOMLDecodeError as e:
+        logging.error(f"modules/nocodb - Error parsing data/config.ini: {e}")
+        exit(1)
 
 class NocoDB:
-    """
-    Minimal client for querying specific tables in a NocoDB instance.
-
-    Parameters:
-    - base_url (str): Base URL of the NocoDB instance (e.g. "https://noco.example.com").
-                                    A trailing slash will be removed automatically.
-    - api_key (str): API key to be sent in the 'xc-token' header.
-
-    The client sets a JSON content type header and reuses a requests.Session.
-    """
-
-    # mapping of kind to table/link/view IDs for member lookups
-    mapping = {
-        "area": {
-            "table": "mbftgdmmi4t668c",
-            "link": "cjest7m9j409yia",
-            "view": "vw72nyx0bmaak96s"
-        },
-        "workgroup": {
-            "table": "m5gpr28sp047j7w",
-            "link": "c4olgvricf9nalu",
-            "view": "vw72nyx0bmaak96s"
-        },
-        "project": {
-            "table": "ma3scczigje9u17",
-            "link": "c96a46tetiedgvg",
-            "view": "vw72nyx0bmaak96s"
-        },
-        "role": {
-            "table": "mpur65wgd6gqi98",
-            "link": "cbuvnbm0wxwkfyo",
-            "view": "vw72nyx0bmaak96s"
-        }
-    }
+    """ Minimal client for querying specific tables in a NocoDB instance. """
 
     def __init__(self, base_url: str, api_key: str):
+        """ Initialize the NocoDB client with base URL and API key. """
+
         # store base url without trailing slash to make URL composition predictable
         self.base_url = base_url.rstrip("/")
 
         # reuse a session for connection pooling and consistent headers
-        self._session = requests.Session()
+        self._session = httpx.AsyncClient()
         self._session.headers.update({
             # NocoDB expects the API key in the 'xc-token' header
             'xc-token': api_key,
-            # we're fetching JSON resources
             'Content-Type': 'application/json'
         })
 
-    def _tags_for_table(self, table_id: str) -> list[str]:
-        """
-        Generic helper to fetch Tag values from a given table and format them as "@tag".
-        """
-        res = self._session.get(
-            f"{self.base_url}/api/v2/tables/{table_id}/records",
+    async def tags(self, kind: str) -> list[str]:
+        """ Return all tags for the given kind. """
+
+        # fetch all records from the relevant table, requesting only the Tag field
+        res = await self._session.get(
+            f"{self.base_url}/api/v2/tables/{config['NocoDB'][kind]['table']}/records",
             params={"limit": 1000, "fields": "Tag"}
         )
+        res.raise_for_status()
         items = res.json().get("list")
+        if not items:
+            return []
         return [f"@{item['Tag'].lower().strip()}" for item in items]
 
-    # Convenience wrappers to preserve the original public API while reusing the generic helper
-    def area_tags(self) -> list[str]:
-        return self._tags_for_table(self.mapping["area"]["table"])
+    async def members(self, tag: str, kind: str) -> list[str]:
+        """ Return Telegram usernames for the given tag and kind. """
 
-    def workgroup_tags(self) -> list[str]:
-        return self._tags_for_table(self.mapping["workgroup"]["table"])
-
-    def project_tags(self) -> list[str]:
-        return self._tags_for_table(self.mapping["project"]["table"])
-
-    def role_tags(self) -> list[str]:
-        return self._tags_for_table(self.mapping["role"]["table"])
-
-    def members(self, tag: str, kind: str) -> list[str]:
-        """
-        Return Telegram usernames for the given tag and kind.
-
-        Parameters:
-        - tag: the tag string to look up (same format as used previously, e.g. "@area")
-        - kind: one of "area", "workgroup", "project", "role"
-
-        The function unifies the previous area_members, workgroup_members,
-        project_members and role_members implementations using an internal
-        mapping of table/link/view IDs.
-        """
-
-        if kind not in self.mapping:
-            raise ValueError(f"unsupported kind: {kind}")
-
-        info = self.mapping[kind]
         # find the NocoDB internal Id for the record that matches the tag
-        nocoid = self._session.get(
-            f"{self.base_url}/api/v2/tables/{info['table']}/records",
+        nocoid_res = await self._session.get(
+            f"{self.base_url}/api/v2/tables/{config['NocoDB'][kind]['table']}/records",
             params={"limit": 1000, "where": f"(Tag,like,{tag})", "fields": "Id"}
-        ).json().get("list")[0].get("Id")
+        )
+        nocoid_res.raise_for_status()
+        nocoid = nocoid_res.json().get("list")[0].get("Id")
 
         # fetch linked member records for that record via the link endpoint
-        res = self._session.get(
-            f"{self.base_url}/api/v2/tables/{info['table']}/links/{info['link']}/records/{nocoid}",
+        res = await self._session.get(
+            f"{self.base_url}/api/v2/tables/{config['NocoDB'][kind]['table']}/links/{config['NocoDB'][kind]['link']}/records/{nocoid}",
             params={"limit": 1000}
-        ).json().get("list")
+        )
+        res.raise_for_status()
+        res = res.json().get("list")
+        if not res:
+            return []
 
         member_ids = [str(item["Id"]) for item in res]
 
@@ -127,61 +68,87 @@ class NocoDB:
         params = {
             "limit": 1000,
             "where": f"(Id,in,{','.join(member_ids)})",
-            "fields": "Telegram Username"
+            "fields": "Telegram Username",
+            "viewId": config['NocoDB']['members']["view"] # use view to filter out inactive members
         }
-        if info.get("view"):
-            params["viewId"] = info["view"]
 
-        res = self._session.get(
-            f"{self.base_url}/api/v2/tables/m3rsrrmnhhxxw0p/records",
+        res = await self._session.get(
+            f"{self.base_url}/api/v2/tables/{config['NocoDB']['members']['table']}/records",
             params=params
         )
+
+        res.raise_for_status()
 
         items = res.json().get("list")
         return [item["Telegram Username"] for item in items if item.get("Telegram Username")]
 
-    def email_from_username(self, username: str) -> str:
-        """
-        Lookup the Team Email for a given Telegram username.
+    async def email_from_username(self, username: str) -> str:
+        """ Lookup the Team Email for a given Telegram username. """
 
-        The 'where' clause attempts two matches:
-        - Telegram Username like @username
-        - Telegram Username like username
-
-        Returns:
-        - Team Email string if found.
-        - None if no matching record exists.
-
-        Note:
-        - The method returns None when no items are found, otherwise it returns a string.
-        """
-        res = self._session.get(
-            f"{self.base_url}/api/v2/tables/m3rsrrmnhhxxw0p/records",
+        res = await self._session.get(
+            f"{self.base_url}/api/v2/tables/{config['NocoDB']['members']['table']}/records",
             params={
                 "limit": 1000,
                 "where": f"(Telegram Username,like,@{username})~or(Telegram Username,like,{username})",
                 "fields": "Team Email"
             }
         )
+        res.raise_for_status()
         items = res.json().get("list")
+
         # if items found return Team Email (or empty string if field missing), else None
         return items[0].get("Team Email", "") if items else None
 
-    def username_from_email(self, email: str) -> str:
-        """
-        Lookup the Telegram Username for a given Team Email.
+    async def username_from_email(self, email: str) -> str:
+        """ Lookup the Telegram Username for a given Team Email. """
 
-        Returns:
-        - Telegram Username string if found.
-        - None if no matching record exists (function returns None when items list is empty).
-        """
-        res = self._session.get(
-            f"{self.base_url}/api/v2/tables/m3rsrrmnhhxxw0p/records",
+        res = await self._session.get(
+            f"{self.base_url}/api/v2/tables/{config['NocoDB']['members']['table']}/records",
             params={
                 "limit": 1000,
                 "where": f"(Team Email,eq,{email})",
                 "fields": "Telegram Username"
             }
         )
+        res.raise_for_status()
         items = res.json().get("list")
         return items[0].get("Telegram Username", "") if items else None
+
+    async def quiz_answer_log(self, username: str, is_correct: bool) -> None:
+        """ Log a question answer attempt for the given username. """
+
+        table = config['NocoDB']['quiz']['table']
+        url = f"{self.base_url}/api/v2/tables/{table}/records"
+
+        # Find existing record for the username
+        find_params = {
+            "where": f"(username,eq,{username})",
+            "fields": "Id,answered,correct",
+            "limit": 1
+        }
+        res = await self._session.get(url, params=find_params)
+        res.raise_for_status()
+        records = res.json().get("list", [])
+
+        if records:
+            # User exists, update their stats
+            record = records[0]
+            record_id = record['Id']
+
+            payload = {
+                "Id": record_id,
+                "answered": record.get('answered', 0) + 1,
+                "correct": record.get('correct', 0) + (1 if is_correct else 0)
+            }
+
+            update_res = await self._session.patch(f"{url}", json=payload)
+            update_res.raise_for_status()
+        else:
+            # User does not exist, create a new record
+            payload = {
+                "username": username,
+                "answered": 1,
+                "correct": 1 if is_correct else 0
+            }
+            create_res = await self._session.post(url, json=payload)
+            create_res.raise_for_status()

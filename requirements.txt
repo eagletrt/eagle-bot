@@ -1,3 +1,7 @@
 python-telegram-bot
 requests
 pony
+apscheduler
+qrcode
+Pillow
+httpx

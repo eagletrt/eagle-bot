@@ -5,8 +5,7 @@
 #Remove under working files
 *.dis
 
-#Python log
-*.log
+#Bot data files
 data/
 
 #Python venv
@@ -16,6 +15,7 @@ __pycache__/
 
 # VsCode workspace
 *.code-workspace
+.vscode/
 
 # PyCharm workspace
 .idea/

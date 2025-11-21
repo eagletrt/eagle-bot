@@ -1,116 +1,198 @@
-# T.E.C.S. - 3.0
+# T.E.C.S.
 
-**eagle-bot** is a Telegram bot designed for the E-Agle TRT team. It integrates task management, interaction with a NocoDB database, and internal API queries to monitor lab presence and time spent.
+**Eagle-Bot** is a multi-function Telegram bot designed for the E-Agle TRT team. It simplifies task management, interaction with external databases, and monitoring of lab attendance, acting as a digital assistant for the team.
 
-## Main features
+## Table of Contents
 
-- **ODG (Agenda) management:** Add, remove, reset, and view a shared task list per chat/thread.
-- **NocoDB integration:** Retrieve tags (areas, workgroups, projects, roles) and members associated with tags via the REST API.
-- **E-Agle API interaction:** Display people currently in the lab and the hours each member has spent.
-- **Reply to mentions:** Mentioning a tag (e.g. `@sw`) the bot replies with the list of associated members.
-- **Detailed logging:** Logs to file and console, with colored log levels.
+- [Main Features](#main-features)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Installation and Startup](#installation-and-startup)
+  - [Local Development](#local-development)
+  - [Docker](#docker)
+- [Configuration](#configuration)
+  - [Environment Variables](#environment-variables)
+- [Usage](#usage)
+  - [Available Commands](#available-commands)
+  - [Mentions](#mentions)
+- [Technical Details](#technical-details)
+  - [Logging](#logging)
+  - [Database](#database)
 
-## Main file structure
+---
 
-- [`main.py`](main.py):  
-  Bot entrypoint. Handles configuration, startup, registering command and mention handlers, and initializing clients for NocoDB and the Eagle API.
+## Main Features
 
-- [`modules/nocodb.py`](modules/nocodb.py):  
-  Lightweight wrapper for the NocoDB REST API. Allows fetching tags, members associated with a tag, and mapping Telegram usernames ↔ team emails.
+- **Agenda Management (ODG)**: Add, remove, view, and reset a shared task list for each chat or thread.
+- **NocoDB Integration**: Retrieve information about members, areas, workgroups, and projects via REST API.
+- **Interaction with E-Agle API**: Monitor who is present in the lab and view the monthly hours of each member.
+- **Mention Notifications**: By mentioning a tag (e.g., `@sw`), the bot responds with the list of associated members, facilitating communication.
+- **Quiz Management**: Create and manage interactive quizzes for team training and engagement.
+- **QR Code Generation**: Create QR codes from any text or URL.
+- **Detailed Logging**: Records operations to files and console with colored log levels for easy debugging.
 
-- [`modules/api_client.py`](modules/api_client.py):  
-  Client for the Eagle API (endpoints `/lab/ore` and `/lab/inlab`). Allows obtaining the list of people in the lab and presence hours.
+## Architecture
 
-- [`modules/database.py`](modules/database.py):  
-  ORM module (Pony ORM) for local management of tasks (Task) and ODG lists, persisted to SQLite (`/data/eagletrtbot.db`).
+The bot is built on a modular architecture that separates responsibilities into distinct components:
 
-- [`docker-compose.yml`](docker-compose.yml) & [`Dockerfile`](Dockerfile):  
-  Enable running the bot in Docker with persistent data and configuration via environment variables.
+1.  **Core (`main.py`)**: This is the application's entry point. It manages the bot's lifecycle, initializes clients for external APIs, and registers command and mention handlers based on the configuration.
+2.  **Command Handlers (`/commands`)**: Each file in this directory implements the logic for a specific command (e.g., `/odg`, `/inlab`). This approach keeps the code organized and easy to extend.
+3.  **Modules (`/modules`)**: Contains clients and wrappers for interacting with external services and the local database.
+    - `nocodb.py`: Client for NocoDB APIs.
+    - `api_client.py`: Client for E-Agle's internal APIs.
+    - `database.py`: Manager for the local database (SQLite with Pony ORM).
+    - `quiz.py`: Logic for quiz management.
+    - `scheduler.py`: For running scheduled tasks.
+4.  **Persistent Data (`/data`)**: A directory mounted as a Docker volume to store the SQLite database, log files, and configuration.
+5.  **Configuration (`config.ini`)**: A central configuration file that allows enabling or disabling features (feature flags) and customizing bot settings without modifying the code.
 
-- [`requirements.txt`](requirements.txt):  
-  List of required Python dependencies: `python-telegram-bot`, `requests`, `pony`.
+## Project Structure
 
-## Required environment variables
+```
+.
+├── commands/         # Bot command handlers
+│   ├── odg.py
+│   ├── inlab.py
+│   └── ...
+├── data/             # Persistent data (database, logs)
+├── modules/          # Reusable modules (API clients, DB)
+│   ├── nocodb.py
+│   ├── api_client.py
+│   ├── database.py
+│   └── ...
+├── main.py           # Application entrypoint
+├── requirements.txt  # Python dependencies
+├── Dockerfile        # Instructions to build the Docker image
+├── config.ini.example # Example configuration file
+└── README.md         # This documentation
+```
 
-- `TELEGRAM_BOT_TOKEN`: Telegram bot token.
-- `NOCO_URL`: Base URL of the NocoDB instance.
-- `NOCO_API_KEY`: API key for NocoDB authentication.
-- `EAGLE_API_URL`: Base URL of the E-Agle API.
+## Prerequisites
 
-## Quick start (for local development)
+- Python 3.9+
+- Docker and Docker Compose (for running in a container)
+- Access to NocoDB and E-Agle APIs
 
-1. **Configure environment variables:**  
-   Set the required variables (see above).
+## Installation and Startup
 
-2. **Install dependencies:**  
-   Run `pip install -r requirements.txt` to install Python dependencies.
+### Local Development
 
-3. **Start the bot:**  
-   Run `python main.py` to start the bot.
+1.  **Clone the repository:**
 
-## Running with Docker
+    ```bash
+    git clone https://github.com/eagletrt/eagle-bot.git
+    cd eagle-bot
+    ```
 
-1. **Configure environment variables:**  
-   Update `docker-compose.yml` with the required variables.
+2.  **Create a virtual environment and install dependencies:**
 
-2. **Build and run the container:**  
-   Run `docker-compose up --build -d` to build and start the container in the background.
+    ```bash
+    python -m venv myenv
+    source myenv/bin/activate
+    pip install -r requirements.txt
+    ```
 
-## Logs
+3.  **Configure the bot:**
+    Create a copy of the `config.ini.example` file, rename it to `config.ini`, and move it to the `data/` folder. Modify the values inside according to your needs.
 
-- Logs are saved to `/data/bot.log` with level WARNING and above.
-- INFO and above are shown in the console with colored output.
+4.  **Export the required environment variables:**
+    API keys and tokens should not be placed in the configuration file but exported as environment variables for security.
 
-## ODG Database
+    ```bash
+    export TELEGRAM_BOT_TOKEN="your_token"
+    export NOCO_API_KEY="your_api_key"
+    export SHLINK_API_KEY="your_api_key"
+    ```
 
-- The SQLite database `/data/eagletrtbot.db` is created automatically on first run.
-- It contains the `Task` and `OdgList` tables for managing tasks.
+5.  **Start the bot:**
+    ```bash
+    python main.py
+    ```
 
-## Usage examples
+### Docker
 
-- **Add a task to the ODG:**
+The recommended way to run the bot in production is via Docker, to ensure an isolated environment and simplified management.
 
-  ```
-  /odg <task>
-  ```
+1.  **Create the configuration file:**
+    Create the `data` folder if it doesn't exist, then create the `data/config.ini` file from `config.ini.example` and customize it.
 
-- **Remove a task from the ODG:**
+2.  **Create a `.env` file:**
+    Create a `.env` file in the project root for environment variables. Docker Compose will automatically use it to populate them in the container.
 
-  ```
-  /odg <task_number>
-  ```
+    ```env
+    TELEGRAM_BOT_TOKEN=...
+    NOCO_API_KEY=...
+    SHLINK_API_KEY=...
+    ```
 
-- **Reset the ODG:**
+3.  **Start the container:**
+    ```bash
+    docker compose up --build -d
+    ```
 
-  ```
-  /odg reset
-  ```
+## Configuration
 
-- **Show the ODG:**
+The bot's configuration is managed through the `data/config.ini` file, which allows you to customize the bot's behavior without modifying the source code.
 
-  ```
-  /odg
-  ```
+### Environment Variables
 
-- **Show available tags:**
+The following environment variables are **mandatory** for authentication with external services:
 
-  ```
-  /tags
-  ```
+| Variable             | Description                                  |
+| -------------------- | -------------------------------------------- |
+| `TELEGRAM_BOT_TOKEN` | Authentication token for the Telegram bot.   |
+| `NOCO_API_KEY`       | API key for authentication with NocoDB.      |
+| `SHLINK_API_KEY`     | API key for authentication with Shlink.      |
 
-- **Show members of an area/workgroup/project/role/inlab:**
+### `config.ini` File
 
-  ```
-  @sw @rt @cr @tl @inlab
-  ```
+This file is divided into sections:
 
-- **Show people currently in the lab:**
+- **`[Settings]`**: Contains general settings like API URLs, log levels, and quiz areas.
+- **`[Paths]`**: Defines the paths for log files and the database.
+- **`[Features]`**: Allows you to enable or disable bot features (e.g., `ODGCommand`, `FSQuiz`). Setting a value to `false` will prevent the corresponding command or feature from being loaded.
 
-  ```
-  /inlab
-  ```
+## Usage
 
-- **Show monthly lab presence hours:**
-  ```
-  /ore
-  ```
+### Available Commands
+
+| Command     | Description                                             | Example                             |
+| ----------- | ------------------------------------------------------- | ----------------------------------- |
+| `/start`    | Shows a welcome message.                                | `/start`                            |
+| `/odg`      | Manages the Agenda (ODG).                               | `/odg`, `/odg <task>`, `/odg reset` |
+| `/tags`     | Shows available tags (areas, projects, etc.).           | `/tags`                             |
+| `/inlab`    | Shows who is currently in the lab.                      | `/inlab`                            |
+| `/ore`      | Shows the monthly hours for each member.                | `/ore`                              |
+| `/quiz`     | Starts or manages a quiz.                               | `/quiz <id>`                        |
+| `/quizzes`  | Lists all available quizzes.                            | `/quizzes`                          |
+| `/question` | Sends a random question from a specific area.           | `/question <area>`                  |
+| `/answer`   | Allows answering an open-ended question.                | `/answer <text>`                    |
+| `/qr`       | Generates a QR code from the provided text.             | `/qr https://example.com`           |
+| `/events`   | Shows upcoming events.                                  | `/events`                           |
+| `/id`       | Shows the current chat ID and your user ID.             | `/id`                               |
+
+### Mentions
+
+You can mention a tag (previously configured in NocoDB) to notify all associated members.
+
+- **Syntax**: `@<tag_name>`
+- **Example**: `@sw` will mention all members of the "Software" group.
+- **Special Mentions**:
+  - `@inlab`: Mentions all users currently in the lab.
+
+## Technical Details
+
+### Logging
+
+The logging system is configurable via the `config.ini` file:
+
+- **`ConsoleLogLevel`**: Sets the log level for console output (e.g., `INFO`, `DEBUG`). Console logs are colored for better readability.
+- **`FileLogLevel`**: Sets the log level for saving to a file (e.g., `WARNING`, `ERROR`).
+- **`LogFilePath`**: Specifies the path to the log file (e.g., `data/bot.log`).
+
+### Database
+
+- The bot uses an **SQLite** database (`/data/eagletrtbot.db`) for persisting data related to the agenda and quizzes.
+- Interaction with the database is handled via **Pony ORM**, which abstracts SQL queries and simplifies entity management.
+- The database file is created automatically on the first run.

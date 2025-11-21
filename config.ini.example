@@ -1,0 +1,65 @@
+
+[Settings]
+ConsoleLogLevel = 'INFO' # Logging level (e.g., INFO, WARNING, ERROR)
+FileLogLevel = 'WARNING' # File logging level (e.g., INFO, WARNING, ERROR)
+areas = ["CM", "HW"] # List of areas for the /question command
+NOCO_URL = 'https://database.domain.com' # URL of the NocoDB instance
+EAGLE_API_URL = 'https://api.domain.com' # URL of the Eagle API
+SHLINK_API_URL = 'https://shlink.domain.com' # URL of the Shlink API
+
+[Whitelist]
+General = ['@everyone'] # Telegram usernames allowed bot access
+cron = '*/30 * * * *' # Cron schedule for refreshing the whitelist (default: every 30 minutes)
+Quiz = ['@it', '@sw', '@user123'] # Telegram usernames allowed to use quiz admin features
+QRcodeGroups = ['-GroupID', '-GroupID'] # List of Telegram group IDs where QR code features are allowed
+
+[Features]
+EAgleAPIIntegration = false # Enable or disable integration with the Eagle API
+NocoDBIntegration = false # Enable or disable NocoDB integration (tags, mentions, inlab, quiz logging)
+ODGCommand = false # Enable or disable the /odg command
+IDCommand = false # Enable or disable the /info command
+MentionHandler = false # Enable or disable the mention handler (/tags command && mention responses)
+QRcodeGenerator = false # Enable or disable the QR code generator feature
+FSQuiz = false # Enable or disable the quiz feature
+FSQuizLogging = false # Enable or disable logging of quiz answers
+FSQuizScheduledSends = false # Enable or disable scheduled quiz sends
+
+[Paths]
+DatabasePath = '../data/botDatabase.db' # Path to the main database file
+QuizDBPath = '../data/quizDatabase.db' # Path to the quiz database file
+LogFilePath = './data/logFile.log' # Path to the log file
+
+[ScheduledQuestions.Engineering]
+GroupID = '-GroupID' # Telegram group ID for the Engineering area
+Threads = ['1', '2'] # List of scheduled question thread IDs for the Engineering area
+Scheduling = ['*/1 * * * *', '*/2 * * * *'] # List of cron scheduling strings for every thread in Threads
+area = ['HW', "SW"] # List of area codes for the Engineering area
+
+[ScheduledQuestions.Operations]
+GroupID = '-GroupID' # Telegram group ID for the Operations area
+Threads = ['3', '4'] # List of scheduled question thread IDs for the Operations area
+Scheduling = ['*/1 * * * *', '*/2 * * * *'] # List of cron scheduling strings for every thread in Threads
+area = ['CM', "MGT"] # List of area codes for the Operations area
+
+[NocoDB.members]
+table = 'qwertyuiop12345'
+view = 'qwertyuiop12345'
+
+[NocoDB.area]
+table = 'qwertyuiop12345'
+link = 'qwertyuiop12345'
+
+[NocoDB.workgroup]
+table = 'qwertyuiop12345'
+link = 'qwertyuiop12345'
+
+[NocoDB.project]
+table = 'qwertyuiop12345'
+link = 'qwertyuiop12345'
+
+[NocoDB.role]
+table = 'qwertyuiop12345'
+link = 'qwertyuiop12345'
+
+[NocoDB.quiz]
+table = 'qwertyuiop12345'
