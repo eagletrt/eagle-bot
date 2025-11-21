@@ -103,6 +103,7 @@ The bot is built on a modular architecture that separates responsibilities into 
     export TELEGRAM_BOT_TOKEN="your_token"
     export NOCO_API_KEY="your_api_key"
     export SHLINK_API_KEY="your_api_key"
+    export CONFIG_PATH="data/config.ini"
     ```
 
 5.  **Start the bot:**
@@ -124,6 +125,7 @@ The recommended way to run the bot in production is via Docker, to ensure an iso
     TELEGRAM_BOT_TOKEN=...
     NOCO_API_KEY=...
     SHLINK_API_KEY=...
+    CONFIG_PATH=...
     ```
 
 3.  **Start the container:**

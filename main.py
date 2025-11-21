@@ -112,26 +112,29 @@ async def ps(application: Application) -> None:
 def main() -> None:
     """Main function to set up and run the bot."""
 
-    # Load configuration from config.ini
-    with open("data/config.ini", "rb") as f:
-        try:
-            config = tomllib.load(f)
-        except tomllib.TOMLDecodeError as e:
-            logging.error(f"main/main - Error parsing data/config.ini: {e}")
-            exit(1)
-
     # Validate environment variables
-    required_vars = ["TELEGRAM_BOT_TOKEN", "NOCO_API_KEY", "SHLINK_API_KEY"]
+    required_vars = ["TELEGRAM_BOT_TOKEN", "NOCO_API_KEY", "SHLINK_API_KEY", "CONFIG_PATH"]
     missing_vars = [var for var in required_vars if not os.getenv(var)]
     if missing_vars:
         if "TELEGRAM_BOT_TOKEN" in missing_vars:
             logging.error("main/main - TELEGRAM_BOT_TOKEN environment variable is required but not set.")
+            exit(1)
+        if "CONFIG_PATH" in missing_vars:
+            logging.error("main/main - CONFIG_PATH environment variable is required but not set.")
             exit(1)
         if "NOCO_API_KEY" in missing_vars and config['Features']['NocoDBIntegration']:
             logging.error("main/main - NOCO_API_KEY environment variable is required but not set.")
             exit(1)
         if "SHLINK_API_KEY" in missing_vars and config['Features']['QRcodeGenerator']:
             logging.error("main/main - SHLINK_API_KEY environment variable is required but not set.")
+            exit(1)
+
+    # Load configuration from config.ini
+    with open(os.getenv("CONFIG_PATH"), "rb") as f:
+        try:
+            config = tomllib.load(f)
+        except tomllib.TOMLDecodeError as e:
+            logging.error(f"main/main - Error parsing data/config.ini: {e}")
             exit(1)
 
     # Configure logging from config file

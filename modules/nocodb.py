@@ -1,9 +1,10 @@
 import httpx
 import tomllib
 import logging
+import os
 
 # Load configuration from config.ini
-with open("data/config.ini", "rb") as f:
+with open(os.getenv("CONFIG_PATH"), "rb") as f:
     try:
         config = tomllib.load(f)
     except tomllib.TOMLDecodeError as e:
