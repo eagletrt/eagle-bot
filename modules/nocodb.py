@@ -21,7 +21,7 @@ class NocoDB:
         self.base_url = base_url.rstrip("/")
 
         # reuse a session for connection pooling and consistent headers
-        self._session = httpx.AsyncClient()
+        self._session = httpx.AsyncClient(timeout=60.0)
         self._session.headers.update({
             # NocoDB expects the API key in the 'xc-token' header
             'xc-token': api_key,
