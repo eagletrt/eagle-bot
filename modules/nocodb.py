@@ -81,7 +81,7 @@ class NocoDB:
         res.raise_for_status()
 
         items = res.json().get("list")
-        return [item["Telegram Username"] for item in items if item.get("Telegram Username")]
+        return [f"{item['Telegram Username'].lower().strip()}" for item in items if item.get("Telegram Username")]
 
     async def email_from_username(self, username: str) -> str:
         """ Lookup the Team Email for a given Telegram username. """

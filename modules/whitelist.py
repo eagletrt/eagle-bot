@@ -67,11 +67,11 @@ class Whitelist:
         """ Check if a user is whitelisted for any of the provided tags. """
 
         # Put a @ before username to match tag format
-        username = "@" + username
+        username = "@" + username.lower()
 
         # Check if the user is whitelisted for any of the provided tags
         for tag in tags:
-            if tag == username:
+            if tag.lower() == username:
                 return True
             elif tag in self.whitelist and username in self.whitelist[tag]:
                 return True
