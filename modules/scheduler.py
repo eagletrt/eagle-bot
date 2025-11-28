@@ -68,7 +68,7 @@ async def send_scheduled_question(bot, group_id, thread_id, area_code):
             options=options,
             type="quiz",
             correct_option_id=correct_indices[0],
-            is_anonymous=False,
+            is_anonymous=True,
         )
 
         # Store the mapping between the poll ID and the question in the database

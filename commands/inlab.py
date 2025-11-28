@@ -45,6 +45,6 @@ async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_html("Nobody is in the lab right now.")
     else:
         await update.message.reply_html(
-            f"There are <b>{inlab_data['count']}</b> people in the lab: {', '.join(tags)}"
+            f"There are <b>{inlab_data['count']}</b> people in the lab: \n{', '.join(tags)}"
         )
     return
