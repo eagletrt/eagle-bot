@@ -17,14 +17,14 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         logging.warning("commands/mentions - User without username attempted to use mention handler")
         return
 
-    # Guard: skip if there's no text (e.g. stickers, images)
+    # Guard: skip if there's no text
     msg = update.message
-    if not msg or not msg.text:
-        logging.info(f"Message from @{username} has no text to process.")
+    if not msg or (not msg.text and not msg.caption):
+        logging.info(f"commands/mentions - Message from @{username} has no text or caption to process.")
         return
     
     # Find all mentions like @username or @tag (letters, digits, underscore, dot, hyphen allowed)
-    text = msg.text.lower()
+    text = msg.text.lower() if msg.text else msg.caption.lower()
     found_tags = set(re.findall(r'@[\w\.-]+', text))
     if not found_tags:
         return
