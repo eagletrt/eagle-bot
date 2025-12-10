@@ -27,7 +27,7 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     text = msg.text.lower()
     found_tags = set(re.findall(r'@[\w\.-]+', text))
     if not found_tags:
-        return    
+        return
     
     # Whitelist check
     if context.bot_data['config']['Features']['Whitelist'] and not context.bot_data['whitelist'].is_user_whitelisted(username, context.bot_data['config']['Whitelist']['General']):
@@ -40,6 +40,10 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     whitelist = context.bot_data["whitelist"]
 
     message = ""
+    temp_message = None
+
+    if "@inlab" in found_tags and context.bot_data['config']['Features']['EAgleAPIIntegration']:
+        temp_message = await update.message.reply_html("Dame n’atimo che i cato fora")
 
     # Iterate found tags and handle each; replies the list of members for matched tags
     for tag in found_tags:
@@ -82,5 +86,10 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         
     # If we have a message to send, reply with it
     if message != "":
-        await update.message.reply_html(message)
+        if temp_message:
+            await temp_message.edit_text(message, parse_mode='HTML')
+        else:
+            await update.message.reply_html(message)
+    elif temp_message:
+        await temp_message.edit_text("Nobody is in the lab right now.", parse_mode='HTML')
     return

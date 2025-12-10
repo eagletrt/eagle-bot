@@ -181,7 +181,7 @@ def main() -> None:
     application.add_handler(CommandHandler("start", start))
 
     # Conditional registration of mention handler and /tags command
-    if config['Features']['MentionHandler'] and config['Features']['NocoDBIntegration']:
+    if config['Features']['MentionHandler'] and config['Features']['NocoDBIntegration'] and config['Features']['Whitelist']:
         application.add_handler(CommandHandler("tags", tags))
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, mention_handler))
         logging.info("main/main - Mention handler and /tags command enabled and handlers registered.")

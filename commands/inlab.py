@@ -29,6 +29,9 @@ async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     eagle_api = context.bot_data["eagle_api"]
     nocodb = context.bot_data["nocodb"]
 
+    # Send temporary message
+    message = await update.message.reply_html("Dame n’atimo che i cato fora")
+
     # Call EagleAPI client; expected structure: {'people': [emails], 'count': n}
     inlab_data = eagle_api.inlab()
 
@@ -42,9 +45,10 @@ async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Reply with a message depending on the count
     if inlab_data['count'] == 0:
-        await update.message.reply_html("Nobody is in the lab right now.")
+        await message.edit_text("Nobody is in the lab right now.", parse_mode='HTML')
     else:
-        await update.message.reply_html(
-            f"There are <b>{inlab_data['count']}</b> people in the lab: \n{', '.join(tags)}"
+        await message.edit_text(
+            f"There are <b>{inlab_data['count']}</b> people in the lab: \n{' '.join(tags)}",
+            parse_mode='HTML'
         )
     return
