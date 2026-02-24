@@ -27,6 +27,7 @@ from commands.answer import answer
 from commands.id import id
 from commands.no import no
 from commands.pesa import pesa
+from commands.eduardo import eduardo
 
 # Color codes used for coloring log output in console only
 COLORS = {
@@ -231,6 +232,7 @@ def main() -> None:
     if config['Features']['Memes']:
         application.add_handler(CommandHandler("no", no))
         application.add_handler(CommandHandler("pesa", pesa))
+        application.add_handler(CommandHandler("eduardo", eduardo))
         logging.info("main/main - Memes are enabled and handlers registered")
 
     # Start polling
