@@ -25,6 +25,6 @@ async def no(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     url = context.bot_data['config']['Settings']['NAAS_API_URL']
     response = requests.get(url, timeout=5).json()
 
+    logging.info(f"commands/no - User @{username} used the /no command")
     await update.message.reply_html(f"@{username} wanted to say:\n{response['reason']}")
-
     return
