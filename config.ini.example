@@ -7,6 +7,7 @@ NOCO_URL = 'https://database.domain.com' # URL of the NocoDB instance
 EAGLE_API_URL = 'https://api.domain.com' # URL of the Eagle API
 SHLINK_API_URL = 'https://shlink.domain.com' # URL of the Shlink API
 NAAS_API_URL = 'https://naas.staging.eagletrt.it' # URL of the NAAS API
+PESA_CHAT_ID = '012345678' # Pesa private chat id
 
 [Whitelist]
 General = ['@everyone'] # Telegram usernames allowed bot access

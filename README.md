@@ -174,6 +174,7 @@ This file is divided into sections:
 | `/events`   | Shows upcoming events.                                  | `/events`                           |
 | `/id`       | Shows the current chat ID and your user ID.             | `/id`                               |
 | `/no`       | Shows a random excuse from the naas API.                | `/no`                               |
+| `/pesa`     | Sends a private message to Pesa.                        | `/pesa <message>`                   |
 
 ### Mentions
 
