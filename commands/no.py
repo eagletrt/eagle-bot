@@ -4,7 +4,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 async def no(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Sends a greeting and logs who started the bot."""
+    """Sends a message from the NAAS API and logs who used the /no command."""
 
     # Check if the command is used in a message context
     if update.edited_message or update.message_reaction:

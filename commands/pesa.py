@@ -3,7 +3,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 async def pesa(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Sends a greeting and logs who started the bot."""
+    """Sends a message to the PESA chat and reacts to the user's message."""
 
     # Check if the command is used in a message context
     if update.edited_message or update.message_reaction:
