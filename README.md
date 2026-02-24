@@ -173,6 +173,7 @@ This file is divided into sections:
 | `/qr`       | Generates a QR code from the provided text.             | `/qr https://example.com`           |
 | `/events`   | Shows upcoming events.                                  | `/events`                           |
 | `/id`       | Shows the current chat ID and your user ID.             | `/id`                               |
+| `/no`       | Shows a random excuse from the naas API.                | `/no`                               |
 
 ### Mentions
 

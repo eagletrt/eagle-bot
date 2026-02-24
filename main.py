@@ -25,6 +25,7 @@ from commands.question import question
 from commands.question_answer import question_answer
 from commands.answer import answer
 from commands.id import id
+from commands.no import no
 
 # Color codes used for coloring log output in console only
 COLORS = {
@@ -225,6 +226,10 @@ def main() -> None:
     if config['Features']['FSQuizLogging'] and config['Features']['FSQuiz'] and config['Features']['NocoDBIntegration']:
         application.add_handler(PollAnswerHandler(question_answer))
         logging.info("main/main - Quiz logging enabled and handlers registered.")
+
+    if config['Features']['Memes']:
+        application.add_handler(CommandHandler("no", no))
+        logging.info("main/main - Memes are enabled and handlers registered")
 
     # Start polling
     application.run_polling(allowed_updates=Update.ALL_TYPES)
