@@ -2,7 +2,7 @@ import logging
 from telegram import Update
 from telegram.ext import ContextTypes
 
-async def skillIssue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def skill_issue(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Sends a skill issue message and logs who triggered it."""
 
     # Check if the command is used in a message context
