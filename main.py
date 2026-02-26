@@ -27,7 +27,6 @@ from commands.answer import answer
 from commands.id import id
 from commands.no import no
 from commands.eduardo import eduardo
-from commands.skill_issue import skill_issue
 
 # Color codes used for coloring log output in console only
 COLORS = {
@@ -186,7 +185,6 @@ def main() -> None:
     if config['Features']['Memes']:
         application.add_handler(CommandHandler("no", no))
         application.add_handler(CommandHandler("eduardo", eduardo))
-        application.add_handler(MessageHandler(filters.Regex(r'^/Odg'), skill_issue))
         logging.info("main/main - Memes are enabled and handlers registered")
 
     # Conditional registration of mention handler and /tags command
