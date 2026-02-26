@@ -1,5 +1,5 @@
 import logging
-import requests
+import httpx
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -23,8 +23,25 @@ async def no(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
 
     url = context.bot_data['config']['Settings']['NAAS_API_URL']
-    response = requests.get(url, timeout=5).json()
+
+    try:
+        async with httpx.AsyncClient() as client:
+            api_response = await client.get(url, timeout=5)
+            api_response.raise_for_status()
+            try:
+                response_data = api_response.json()
+            except ValueError:
+                logging.error("commands/no - Failed to decode JSON from NAAS API response")
+                return
+    except httpx.HTTPStatusError as e:
+        logging.error(f"commands/no - HTTP error from NAAS API: {e}")
+        return
+    except httpx.RequestError as e:
+        logging.error(f"commands/no - Connection error while calling NAAS API: {e}")
+        return
+
+    reason = response_data.get("reason")
 
     logging.info(f"commands/no - User @{username} used the /no command")
-    await update.message.reply_html(f"@{username} wanted to say:\n{response['reason']}")
+    await update.message.reply_html(f"@{username} wanted to say:\n{reason}")
     return
