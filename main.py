@@ -28,6 +28,7 @@ from commands.id import id
 from commands.no import no
 from commands.pesa import pesa
 from commands.eduardo import eduardo
+from commands.skill_issue import skillIssue
 
 # Color codes used for coloring log output in console only
 COLORS = {
@@ -183,6 +184,12 @@ def main() -> None:
     # Register handlers
     application.add_handler(CommandHandler("start", start))
 
+    if config['Features']['Memes']:
+        application.add_handler(CommandHandler("no", no))
+        application.add_handler(CommandHandler("pesa", pesa))
+        application.add_handler(CommandHandler("eduardo", eduardo))
+        logging.info("main/main - Memes are enabled and handlers registered")
+
     # Conditional registration of mention handler and /tags command
     if config['Features']['MentionHandler'] and config['Features']['NocoDBIntegration'] and config['Features']['Whitelist']:
         application.add_handler(CommandHandler("tags", tags))
@@ -228,12 +235,6 @@ def main() -> None:
     if config['Features']['FSQuizLogging'] and config['Features']['FSQuiz'] and config['Features']['NocoDBIntegration']:
         application.add_handler(PollAnswerHandler(question_answer))
         logging.info("main/main - Quiz logging enabled and handlers registered.")
-
-    if config['Features']['Memes']:
-        application.add_handler(CommandHandler("no", no))
-        application.add_handler(CommandHandler("pesa", pesa))
-        application.add_handler(CommandHandler("eduardo", eduardo))
-        logging.info("main/main - Memes are enabled and handlers registered")
 
     # Start polling
     application.run_polling(allowed_updates=Update.ALL_TYPES)
