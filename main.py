@@ -188,6 +188,7 @@ def main() -> None:
         application.add_handler(CommandHandler("no", no))
         application.add_handler(CommandHandler("pesa", pesa))
         application.add_handler(CommandHandler("eduardo", eduardo))
+        application.add_handler(MessageHandler(filters.Regex(r'^/Odg'), skillIssue))
         logging.info("main/main - Memes are enabled and handlers registered")
 
     # Conditional registration of mention handler and /tags command
