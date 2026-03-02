@@ -37,16 +37,16 @@ async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             odg = ODG(chatId=chat_id, threadId=thread_id)
 
         # Reset ODG to empty
-        if update.message.text.startswith("/odg reset"):
+        if text.lower().startswith("/odg reset"):
             odg.reset()
             logging.info(f"commands/odg - User @{username} reset the ODG in chat {chat_id} thread {thread_id}")
             await update.message.set_reaction("👍")
             return
         
         # Remove a task by its shown ID (user-provided). Convert to zero-based index for internal store.
-        elif update.message.text.startswith("/odg remove"):
+        elif text.lower().startswith("/odg remove"):
             try:
-                task_id = int(update.message.text.split(' ', 2)[2])
+                task_id = int(text.split(' ', 2)[2])
             except (ValueError, IndexError):
 
                 # If parsing failed, notify the user
@@ -64,7 +64,7 @@ async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             return
             
         # Add a new task. The user-provided text follows the command (/odg <text>)
-        elif update.message.text.startswith("/odg "):
+        elif text.lower().startswith("/odg "):
             Task(
                 text=text.split(' ', 1)[1],
                 created_by=(getattr(update.effective_user, "first_name", "") or "") + " " + (getattr(update.effective_user, "last_name", "") or ""),

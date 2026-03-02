@@ -25,6 +25,8 @@ from commands.question import question
 from commands.question_answer import question_answer
 from commands.answer import answer
 from commands.id import id
+from commands.no import no
+from commands.eduardo import eduardo
 
 # Color codes used for coloring log output in console only
 COLORS = {
@@ -179,6 +181,11 @@ def main() -> None:
 
     # Register handlers
     application.add_handler(CommandHandler("start", start))
+
+    if config['Features']['Memes']:
+        application.add_handler(CommandHandler("no", no))
+        application.add_handler(CommandHandler("eduardo", eduardo))
+        logging.info("main/main - Memes are enabled and handlers registered")
 
     # Conditional registration of mention handler and /tags command
     if config['Features']['MentionHandler'] and config['Features']['NocoDBIntegration'] and config['Features']['Whitelist']:
