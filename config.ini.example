@@ -6,7 +6,7 @@ areas = ["CM", "HW"] # List of areas for the /question command
 NOCO_URL = 'https://database.domain.com' # URL of the NocoDB instance
 EAGLE_API_URL = 'https://api.domain.com' # URL of the Eagle API
 SHLINK_API_URL = 'https://shlink.domain.com' # URL of the Shlink API
-NAAS_API_URL = 'https://naas.staging.eagletrt.it' # URL of the NAAS API
+NAAS_API_URL = 'https://naas.domain.com' # URL of the NAAS API
 
 [Whitelist]
 General = ['@everyone'] # Telegram usernames allowed bot access
