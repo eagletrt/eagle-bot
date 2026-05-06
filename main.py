@@ -130,7 +130,7 @@ def main() -> None:
         if "SHLINK_API_KEY" in missing_vars and config['Features']['QRcodeGenerator']:
             logging.error("main/main - SHLINK_API_KEY environment variable is required but not set.")
             exit(1)
-        if "DB_PASSWORD" in missing_vars and config['Features']['ODGCommand']:
+        if "DB_PASSWORD" in missing_vars and (config['Features']['ODGCommand'] or config['Features']['FSQuiz']):
             logging.error("main/main - DB_PASSWORD environment variable is required but not set.")
             exit(1)
 
