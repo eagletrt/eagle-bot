@@ -33,8 +33,6 @@ FSQuizScheduledSends = false # Enable or disable scheduled quiz sends
 Memes = true # Enable or disable all the memes features
 
 [Paths]
-DatabasePath = '../data/botDatabase.db' # Path to the main database file
-QuizDBPath = '../data/quizDatabase.db' # Path to the quiz database file
 LogFilePath = './data/logFile.log' # Path to the log file
 
 [ScheduledQuestions.Engineering]
