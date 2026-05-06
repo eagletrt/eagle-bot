@@ -44,7 +44,7 @@ The bot is built on a modular architecture that separates responsibilities into 
     - `database.py`: Manager for the local database (PostgreSQL with Pony ORM).
     - `quiz.py`: Logic for quiz management.
     - `scheduler.py`: For running scheduled tasks.
-4.  **Persistent Data (`/data`)**: A directory mounted as a Docker volume to store the PostgreSQL database, log files, and configuration.
+4.  **Persistent Data (`/data`)**: A directory mounted as a Docker volume to store the log files, and configuration.
 5.  **Configuration (`config.ini`)**: A central configuration file that allows enabling or disabling features (feature flags) and customizing bot settings without modifying the code.
 
 ## Project Structure
@@ -55,7 +55,7 @@ The bot is built on a modular architecture that separates responsibilities into 
 │   ├── odg.py
 │   ├── inlab.py
 │   └── ...
-├── data/             # Persistent data (database, logs)
+├── data/             # Persistent data (logs, configuration)
 ├── modules/          # Reusable modules (API clients, DB)
 │   ├── nocodb.py
 │   ├── api_client.py
@@ -127,6 +127,7 @@ The recommended way to run the bot in production is via Docker, to ensure an iso
     NOCO_API_KEY=...
     SHLINK_API_KEY=...
     CONFIG_PATH=...
+    DB_PASSWORD=...
     ```
 
 3.  **Start the container:**
@@ -147,6 +148,7 @@ The following environment variables are **mandatory** for authentication with ex
 | `TELEGRAM_BOT_TOKEN` | Authentication token for the Telegram bot.   |
 | `NOCO_API_KEY`       | API key for authentication with NocoDB.      |
 | `SHLINK_API_KEY`     | API key for authentication with Shlink.      |
+| `DB_PASSWORD`        | Password for the PostgreSQL database.        |
 
 ### `config.ini` File
 
