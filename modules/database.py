@@ -12,9 +12,9 @@ with open(os.getenv("CONFIG_PATH"), "rb") as f:
         logging.error(f"modules/database - Error parsing data/config.ini: {e}")
         exit(1)
 
-# Create a Database object connected to a SQLite file.
+# Create a Database object connected to a PostgreSQL database.
 db = Database()
-db.bind(provider="sqlite", filename=config['Paths']['DatabasePath'], create_db=True)
+db.bind(provider="postgres", user=config['Database']['DB_USER'], password=os.getenv("DB_PASSWORD"), host=config['Database']['DB_HOST'], port=config['Database']['DB_PORT'], database=config['Database']['DB_NAME'])
 
 class Task(db.Entity):
     """ Task entity/table representing individual tasks in an ODG. """

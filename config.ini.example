@@ -8,6 +8,12 @@ EAGLE_API_URL = 'https://api.domain.com' # URL of the Eagle API
 SHLINK_API_URL = 'https://shlink.domain.com' # URL of the Shlink API
 NAAS_API_URL = 'https://naas.domain.com' # URL of the NAAS API
 
+[Database]
+DB_USER = 'user' # Database username
+DB_HOST = 'localhost' # Database host
+DB_PORT = '5432' # Database port
+DB_NAME = 'database' # Database name
+
 [Whitelist]
 General = ['@everyone'] # Telegram usernames allowed bot access
 cron = '*/30 * * * *' # Cron schedule for refreshing the whitelist (default: every 30 minutes)
