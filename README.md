@@ -1,4 +1,4 @@
-# T.E.C.S.
+# TECS
 
 **Eagle-Bot** is a multi-function Telegram bot designed for the E-Agle TRT team. It simplifies task management, interaction with external databases, and monitoring of lab attendance, acting as a digital assistant for the team.
 
@@ -41,10 +41,10 @@ The bot is built on a modular architecture that separates responsibilities into 
 3.  **Modules (`/modules`)**: Contains clients and wrappers for interacting with external services and the local database.
     - `nocodb.py`: Client for NocoDB APIs.
     - `api_client.py`: Client for E-Agle's internal APIs.
-    - `database.py`: Manager for the local database (SQLite with Pony ORM).
+    - `database.py`: Manager for the local database (PostgreSQL with Pony ORM).
     - `quiz.py`: Logic for quiz management.
     - `scheduler.py`: For running scheduled tasks.
-4.  **Persistent Data (`/data`)**: A directory mounted as a Docker volume to store the SQLite database, log files, and configuration.
+4.  **Persistent Data (`/data`)**: A directory mounted as a Docker volume to store the log files, and configuration.
 5.  **Configuration (`config.ini`)**: A central configuration file that allows enabling or disabling features (feature flags) and customizing bot settings without modifying the code.
 
 ## Project Structure
@@ -55,7 +55,7 @@ The bot is built on a modular architecture that separates responsibilities into 
 │   ├── odg.py
 │   ├── inlab.py
 │   └── ...
-├── data/             # Persistent data (database, logs)
+├── data/             # Persistent data (logs, configuration)
 ├── modules/          # Reusable modules (API clients, DB)
 │   ├── nocodb.py
 │   ├── api_client.py
@@ -104,6 +104,7 @@ The bot is built on a modular architecture that separates responsibilities into 
     export NOCO_API_KEY="your_api_key"
     export SHLINK_API_KEY="your_api_key"
     export CONFIG_PATH="data/config.ini"
+    export DB_PASSWORD="your_db_password"
     ```
 
 5.  **Start the bot:**
@@ -126,6 +127,7 @@ The recommended way to run the bot in production is via Docker, to ensure an iso
     NOCO_API_KEY=...
     SHLINK_API_KEY=...
     CONFIG_PATH=...
+    DB_PASSWORD=...
     ```
 
 3.  **Start the container:**
@@ -146,6 +148,7 @@ The following environment variables are **mandatory** for authentication with ex
 | `TELEGRAM_BOT_TOKEN` | Authentication token for the Telegram bot.   |
 | `NOCO_API_KEY`       | API key for authentication with NocoDB.      |
 | `SHLINK_API_KEY`     | API key for authentication with Shlink.      |
+| `DB_PASSWORD`        | Password for the PostgreSQL database.        |
 
 ### `config.ini` File
 
@@ -197,6 +200,5 @@ The logging system is configurable via the `config.ini` file:
 
 ### Database
 
-- The bot uses an **SQLite** database (`/data/eagletrtbot.db`) for persisting data related to the agenda and quizzes.
+- The bot uses an **PostgreSQL** database for persisting data related to the agenda and quizzes.
 - Interaction with the database is handled via **Pony ORM**, which abstracts SQL queries and simplifies entity management.
-- The database file is created automatically on the first run.

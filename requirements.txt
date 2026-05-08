@@ -5,3 +5,4 @@ apscheduler
 qrcode
 Pillow
 httpx
+psycopg2-binary

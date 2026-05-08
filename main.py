@@ -115,7 +115,7 @@ def main() -> None:
     """Main function to set up and run the bot."""
 
     # Validate environment variables
-    required_vars = ["TELEGRAM_BOT_TOKEN", "NOCO_API_KEY", "SHLINK_API_KEY", "CONFIG_PATH"]
+    required_vars = ["TELEGRAM_BOT_TOKEN", "NOCO_API_KEY", "SHLINK_API_KEY", "CONFIG_PATH", "DB_PASSWORD"]
     missing_vars = [var for var in required_vars if not os.getenv(var)]
     if missing_vars:
         if "TELEGRAM_BOT_TOKEN" in missing_vars:
@@ -129,6 +129,9 @@ def main() -> None:
             exit(1)
         if "SHLINK_API_KEY" in missing_vars and config['Features']['QRcodeGenerator']:
             logging.error("main/main - SHLINK_API_KEY environment variable is required but not set.")
+            exit(1)
+        if "DB_PASSWORD" in missing_vars and (config['Features']['ODGCommand'] or config['Features']['FSQuiz']):
+            logging.error("main/main - DB_PASSWORD environment variable is required but not set.")
             exit(1)
 
     # Load configuration from config.ini
