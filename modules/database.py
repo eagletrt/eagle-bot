@@ -51,6 +51,9 @@ class DatabaseClient:
                         SELECT "Tag" FROM {self.dbconf['bases']['hrBase']}."Roles"
                         ORDER BY "Tag"
                     """
+                else:
+                    logging.error(f"modules/database - Unsupported kind: {kind}")
+                    raise ValueError(f"Unsupported kind: {kind}")
 
                 cursor.execute(query)
                 rows = cursor.fetchall()
@@ -65,6 +68,8 @@ class DatabaseClient:
         except Exception as e:
             logging.error(f"modules/database - Error fetching tags for {kind}: {e}")
             raise
+        finally:
+            conn.close()
 
     async def members(self, tag: str, kind: str) -> list[str]:
         """ Return Telegram usernames for the given tag. """

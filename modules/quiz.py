@@ -92,5 +92,3 @@ class Areas(db.Entity):
     name = PrimaryKey(str)  # The name of the area.
     questions = Set(Questions)  # A collection of questions associated with this area.
     
-# Generate mapping between the above entities and the actual database tables.
-db.generate_mapping(create_tables=True)

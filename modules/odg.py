@@ -9,7 +9,7 @@ with open(os.getenv("CONFIG_PATH"), "rb") as f:
     try:
         config = tomllib.load(f)
     except tomllib.TOMLDecodeError as e:
-        logging.error(f"modules/database - Error parsing data/config.ini: {e}")
+        logging.error(f"modules/odg - Error parsing data/config.ini: {e}")
         exit(1)
 
 # Create a Database object connected to a PostgreSQL database.
@@ -59,6 +59,3 @@ class ODG(db.Entity):
             task[0].delete()
             return True
         return False
-
-# Generate mapping between the above entities and the actual database tables.
-db.generate_mapping(create_tables=True)

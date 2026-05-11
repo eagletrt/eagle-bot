@@ -37,6 +37,9 @@ async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         *[database.username_from_email(email) for email in inlab_data]
     )
 
+    # Filter out None values (users without username are excluded)
+    tags = [tag for tag in tags if tag]
+
     # Log the in-lab data for debugging
     logging.info(f"commands/inlab - User @{username} requested correctly in-lab data: {inlab_data}")
 

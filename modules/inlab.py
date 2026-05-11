@@ -29,7 +29,7 @@ class InLabClient:
             logging.error(f"modules/inlab - Database connection failed: {e}")
             raise
 
-    def oreLab(self, email: str) -> dict:
+    def oreLab(self, email: str) -> float:
         """ Call the ore lab endpoint for a given email. """
 
         conn = self._get_connection()
@@ -37,19 +37,20 @@ class InLabClient:
             with conn.cursor() as cursor:
 
                 now = datetime.now()
+                month_start = f"{now.year}-{now.month:02d}-01"
 
-                query = f"""
+                query = """
                     SELECT "entrata", "uscita" FROM "presenzalab"
-                    WHERE "email" = '{email}' AND "entrata" >= '{now.year}-{now.month}-01' AND "uscita" IS NOT NULL
+                    WHERE "email" = %s AND "entrata" >= %s AND "uscita" IS NOT NULL
                     ORDER BY "entrata" DESC
                 """
 
-                cursor.execute(query)
+                cursor.execute(query, (email, month_start))
                 rows = cursor.fetchall()
                 
                 if not rows:
                     logging.warning(f"modules/inlab - No ore data found for user {email}")
-                    return []
+                    return 0.0
                 
                 result = sum([(row[1] - row[0]).total_seconds() / 3600 for row in rows])
                 logging.info(f"modules/inlab - Retrieved ore data for user {email}: {result}")

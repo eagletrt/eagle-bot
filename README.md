@@ -25,7 +25,7 @@
 ## Main Features
 
 - **Agenda Management (ODG)**: Add, remove, view, and reset a shared task list for each chat or thread.
-- **Database Integration**: Retrieve information about members, areas, workgroups, and projects via PostgreSQL and Pony ORM.
+- **Database Integration**: Retrieve information about members, areas, workgroups, and projects via PostgreSQL (using psycopg2 for the team database and Pony ORM for the ODG database).
 - **Interaction with InLab**: Monitor who is present in the lab and view the monthly hours of each member.
 - **Mention Notifications**: By mentioning a tag (e.g., `@sw`), the bot responds with the list of associated members, facilitating communication.
 - **Quiz Management**: Create and manage interactive quizzes for team training and engagement.
