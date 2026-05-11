@@ -38,8 +38,8 @@ The bot is built on a modular architecture that separates responsibilities into 
 
 1.  **Core (`main.py`)**: This is the application's entry point. It manages the bot's lifecycle, initializes clients for external APIs, and registers command and mention handlers based on the configuration.
 2.  **Command Handlers (`/commands`)**: Each file in this directory implements the logic for a specific command (e.g., `/odg`, `/inlab`). This approach keeps the code organized and easy to extend.
-3.  **Modules (`/modules`)**: Contains clients and wrappers for interacting with external services and the local database.
-    - `database.py`: Client for the team database (PostgreSQL with Pony ORM).
+3.  **Modules (`/modules`)**: Contains clients and wrappers for interacting with external services and the database.
+    - `database.py`: Client for the team database (PostgreSQL).
     - `api_client.py`: Client for E-Agle's internal APIs.
     - `odg.py`: Manager for the ODG database (PostgreSQL with Pony ORM).
     - `quiz.py`: Logic for quiz management.
@@ -152,7 +152,7 @@ The following environment variables are **mandatory** for authentication with ex
 This file is divided into sections:
 
 - **`[Settings]`**: Contains general settings like API URLs, log levels, and quiz areas.
-- **`[Paths]`**: Defines the paths for log files and the database.
+- **`[Paths]`**: Defines the paths for log files.
 - **`[Features]`**: Allows you to enable or disable bot features (e.g., `ODGCommand`, `FSQuiz`). Setting a value to `false` will prevent the corresponding command or feature from being loaded.
 
 ## Usage
