@@ -6,9 +6,6 @@ import asyncio
 async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Reports who is currently in the lab."""
 
-    if not context.bot_data['config']['Features']['NocoDBIntegration']:
-        return
-
     # Check if the command is used in a message context
     if update.edited_message or update.message_reaction:
         return

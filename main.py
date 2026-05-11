@@ -92,7 +92,7 @@ async def ps(application: Application) -> None:
         commands.append(BotCommand("odg", "Show ODG"))
 
     # Conditional addition of Eagle API commands
-    if application.bot_data["config"]['Features']['EAgleAPIIntegration']:
+    if application.bot_data["config"]['Features']['EAgleAPIIntegration'] and application.bot_data["config"]['Features']['DatabaseIntegration']:
         commands.extend([
             BotCommand("inlab", "People currently in lab"),
             BotCommand("ore", "Your month's lab hours"),
@@ -203,7 +203,7 @@ def main() -> None:
         logging.info("main/main - ODG command enabled and handler registered.")
 
     # Conditional registration of Eagle API handlers
-    if config['Features']['EAgleAPIIntegration']:
+    if config['Features']['EAgleAPIIntegration'] and config['Features']['DatabaseIntegration']:
         eagle_api = EagleAPI(config['Settings']['EAGLE_API_URL'])
         application.bot_data["eagle_api"] = eagle_api
         application.add_handler(CommandHandler("inlab", inlab))
