@@ -1,6 +1,6 @@
 import logging
 from pony.orm import db_session
-from modules.database import ODG, Task
+from modules.odg import ODG, Task
 from telegram import Update
 from telegram.ext import ContextTypes
 

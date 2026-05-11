@@ -41,7 +41,7 @@ The bot is built on a modular architecture that separates responsibilities into 
 3.  **Modules (`/modules`)**: Contains clients and wrappers for interacting with external services and the local database.
     - `nocodb.py`: Client for NocoDB APIs.
     - `api_client.py`: Client for E-Agle's internal APIs.
-    - `database.py`: Manager for the local database (PostgreSQL with Pony ORM).
+    - `odg.py`: Manager for the ODG database (PostgreSQL with Pony ORM).
     - `quiz.py`: Logic for quiz management.
     - `scheduler.py`: For running scheduled tasks.
 4.  **Persistent Data (`/data`)**: A directory mounted as a Docker volume to store the log files, and configuration.
@@ -59,7 +59,7 @@ The bot is built on a modular architecture that separates responsibilities into 
 ├── modules/          # Reusable modules (API clients, DB)
 │   ├── nocodb.py
 │   ├── api_client.py
-│   ├── database.py
+│   ├── odg.py
 │   └── ...
 ├── main.py           # Application entrypoint
 ├── requirements.txt  # Python dependencies
