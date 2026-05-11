@@ -39,8 +39,8 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return f"{h}h {m}m"
 
     # Query InLab for hours and pretty-print
-    ore_data = inlabClient.oreLab(team_email.split('@')[0])
-    ore_str = pretty_time(ore_data['ore'])
+    ore_data = inlabClient.oreLab(team_email)
+    ore_str = pretty_time(ore_data)
 
     logging.info(f"commands/ore - User @{username} has spent {ore_str} in the lab this month")
 
