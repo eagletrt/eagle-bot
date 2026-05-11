@@ -36,10 +36,10 @@ class Whitelist:
         tag_map = []
 
         tag_types = {
-            "areas": "area",
-            "workgroups": "workgroup",
-            "projects": "project",
-            "roles": "role"
+            "areas": "Area",
+            "workgroups": "Workgroup",
+            "projects": "Project",
+            "roles": "Role"
         }
 
         for tag_key, tag_type in tag_types.items():

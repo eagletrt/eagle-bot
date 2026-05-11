@@ -65,10 +65,10 @@ async def ps(application: Application) -> None:
     if application.bot_data["config"]['Features']['DatabaseIntegration']:
         # Initialize tag cache
         tag_cache = {
-            "areas": await application.bot_data['database'].tags('area'),
-            "workgroups": await application.bot_data['database'].tags('workgroup'),
-            "projects": await application.bot_data['database'].tags('project'),
-            "roles": await application.bot_data['database'].tags('role')
+            "areas": await application.bot_data['database'].tags('Area'),
+            "workgroups": await application.bot_data['database'].tags('Workgroup'),
+            "projects": await application.bot_data['database'].tags('Project'),
+            "roles": await application.bot_data['database'].tags('Role')
         }
         application.bot_data["tag_cache"] = tag_cache
         logging.info("main/main - Tag cache initialized.")
@@ -187,7 +187,7 @@ def main() -> None:
         logging.info("main/main - Memes are enabled and handlers registered")
 
     # Conditional registration of mention handler and /tags command
-    if config['Features']['MentionHandler'] and config['Features']['DatabaseIntegration']:
+    if config['Features']['MentionHandler'] and config['Features']['DatabaseIntegration'] and config['Features']['Whitelist']:
         application.add_handler(CommandHandler("tags", tags))
         application.add_handler(MessageHandler((filters.TEXT | filters.CAPTION) & ~filters.COMMAND, mention_handler))
         logging.info("main/main - Mention handler and /tags command enabled and handlers registered.")
