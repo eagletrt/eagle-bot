@@ -1,8 +1,8 @@
 import os
 import logging
 import tomllib
-from modules.nocodb import NocoDB
-from modules.api_client import EagleAPI
+from modules.database import DatabaseClient
+from modules.inlab import InLabClient
 from modules.shlink import ShlinkAPI
 from modules.whitelist import Whitelist
 from telegram import Update, BotCommand
@@ -22,7 +22,6 @@ from commands.quizzes import quizzes
 from commands.event import event
 from commands.events import events
 from commands.question import question
-from commands.question_answer import question_answer
 from commands.answer import answer
 from commands.id import id
 from commands.no import no
@@ -63,13 +62,13 @@ logging.basicConfig(level=logging.INFO, handlers=[console_handler])
 async def ps(application: Application) -> None:
     """Post-initialization hook to set bot commands and start scheduler if enabled."""
 
-    if application.bot_data["config"]['Features']['NocoDBIntegration']:
+    if application.bot_data["config"]['Features']['DatabaseIntegration']:
         # Initialize tag cache
         tag_cache = {
-            "areas": await application.bot_data['nocodb'].tags('area'),
-            "workgroups": await application.bot_data['nocodb'].tags('workgroup'),
-            "projects": await application.bot_data['nocodb'].tags('project'),
-            "roles": await application.bot_data['nocodb'].tags('role')
+            "areas": await application.bot_data['database'].tags('Area'),
+            "workgroups": await application.bot_data['database'].tags('Workgroup'),
+            "projects": await application.bot_data['database'].tags('Project'),
+            "roles": await application.bot_data['database'].tags('Role')
         }
         application.bot_data["tag_cache"] = tag_cache
         logging.info("main/main - Tag cache initialized.")
@@ -78,7 +77,7 @@ async def ps(application: Application) -> None:
         setup_scheduler(application)
         logging.info("main/main - Scheduled quiz sends enabled.")
 
-    if application.bot_data["config"]['Features']['Whitelist'] and application.bot_data["config"]['Features']['NocoDBIntegration'] and application.bot_data["config"]['Features']['MentionHandler']:
+    if application.bot_data["config"]['Features']['Whitelist'] and application.bot_data["config"]['Features']['DatabaseIntegration'] and application.bot_data["config"]['Features']['MentionHandler']:
         application.bot_data["whitelist"] = Whitelist(application)
         logging.info("main/main - Whitelist feature enabled.")
 
@@ -92,8 +91,8 @@ async def ps(application: Application) -> None:
     if application.bot_data["config"]['Features']['ODGCommand']:
         commands.append(BotCommand("odg", "Show ODG"))
 
-    # Conditional addition of Eagle API commands
-    if application.bot_data["config"]['Features']['EAgleAPIIntegration']:
+    # Conditional addition of InLab commands
+    if application.bot_data["config"]['Features']['InLabIntegration'] and application.bot_data["config"]['Features']['DatabaseIntegration']:
         commands.extend([
             BotCommand("inlab", "People currently in lab"),
             BotCommand("ore", "Your month's lab hours"),
@@ -115,7 +114,7 @@ def main() -> None:
     """Main function to set up and run the bot."""
 
     # Validate environment variables
-    required_vars = ["TELEGRAM_BOT_TOKEN", "NOCO_API_KEY", "SHLINK_API_KEY", "CONFIG_PATH", "DB_PASSWORD"]
+    required_vars = ["TELEGRAM_BOT_TOKEN", "SHLINK_API_KEY", "CONFIG_PATH", "DB_PASSWORD"]
     missing_vars = [var for var in required_vars if not os.getenv(var)]
     if missing_vars:
         if "TELEGRAM_BOT_TOKEN" in missing_vars:
@@ -124,13 +123,10 @@ def main() -> None:
         if "CONFIG_PATH" in missing_vars:
             logging.error("main/main - CONFIG_PATH environment variable is required but not set.")
             exit(1)
-        if "NOCO_API_KEY" in missing_vars and config['Features']['NocoDBIntegration']:
-            logging.error("main/main - NOCO_API_KEY environment variable is required but not set.")
-            exit(1)
         if "SHLINK_API_KEY" in missing_vars and config['Features']['QRcodeGenerator']:
             logging.error("main/main - SHLINK_API_KEY environment variable is required but not set.")
             exit(1)
-        if "DB_PASSWORD" in missing_vars and (config['Features']['ODGCommand'] or config['Features']['FSQuiz']):
+        if "DB_PASSWORD" in missing_vars and (config['Features']['ODGCommand'] or config['Features']['FSQuiz'] or config['Features']['DatabaseIntegration']):
             logging.error("main/main - DB_PASSWORD environment variable is required but not set.")
             exit(1)
 
@@ -176,11 +172,11 @@ def main() -> None:
     # Store config in bot_data for global access
     application.bot_data["config"] = config
 
-    # Initialize NocoDB client if enabled
-    if config['Features']['NocoDBIntegration']:
-        nocodb = NocoDB(config['Settings']['NOCO_URL'], os.getenv("NOCO_API_KEY"))
-        application.bot_data["nocodb"] = nocodb
-        logging.info("main/main - NocoDB integration enabled.")
+    # Initialize Database client if enabled
+    if config['Features']['DatabaseIntegration']:
+        database = DatabaseClient(application)
+        application.bot_data["database"] = database
+        logging.info("main/main - Database integration enabled.")
 
     # Register handlers
     application.add_handler(CommandHandler("start", start))
@@ -191,7 +187,7 @@ def main() -> None:
         logging.info("main/main - Memes are enabled and handlers registered")
 
     # Conditional registration of mention handler and /tags command
-    if config['Features']['MentionHandler'] and config['Features']['NocoDBIntegration'] and config['Features']['Whitelist']:
+    if config['Features']['MentionHandler'] and config['Features']['DatabaseIntegration'] and config['Features']['Whitelist']:
         application.add_handler(CommandHandler("tags", tags))
         application.add_handler(MessageHandler((filters.TEXT | filters.CAPTION) & ~filters.COMMAND, mention_handler))
         logging.info("main/main - Mention handler and /tags command enabled and handlers registered.")
@@ -206,13 +202,13 @@ def main() -> None:
         application.add_handler(CommandHandler("odg", odg))
         logging.info("main/main - ODG command enabled and handler registered.")
 
-    # Conditional registration of Eagle API handlers
-    if config['Features']['EAgleAPIIntegration']:
-        eagle_api = EagleAPI(config['Settings']['EAGLE_API_URL'])
-        application.bot_data["eagle_api"] = eagle_api
+    # Conditional registration of InLab handlers
+    if config['Features']['InLabIntegration'] and config['Features']['DatabaseIntegration']:
+        inlabClient = InLabClient(application)
+        application.bot_data["inlabClient"] = inlabClient
         application.add_handler(CommandHandler("inlab", inlab))
         application.add_handler(CommandHandler("ore", ore))
-        logging.info("main/main - Eagle API integration enabled and handlers registered.")
+        logging.info("main/main - InLab integration enabled and handlers registered.")
 
     # Conditional registration of QR code generator handler
     if config['Features']['QRcodeGenerator']:
@@ -231,10 +227,6 @@ def main() -> None:
         application.add_handler(CommandHandler("answer", answer))
         application.bot_data["areas"] = config['Settings']['areas']
         logging.info("main/main - Quiz feature enabled and handler registered.")
-
-    if config['Features']['FSQuizLogging'] and config['Features']['FSQuiz'] and config['Features']['NocoDBIntegration']:
-        application.add_handler(PollAnswerHandler(question_answer))
-        logging.info("main/main - Quiz logging enabled and handlers registered.")
 
     # Start polling
     application.run_polling(allowed_updates=Update.ALL_TYPES)

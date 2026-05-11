@@ -1,64 +1,173 @@
-from datetime import datetime  # used for timestamps on Task creation
-from pony.orm import Database, Required, Optional, Set  # Pony ORM constructs
-import tomllib
+import psycopg2
 import logging
 import os
 
-# Load configuration from config.ini
-with open(os.getenv("CONFIG_PATH"), "rb") as f:
-    try:
-        config = tomllib.load(f)
-    except tomllib.TOMLDecodeError as e:
-        logging.error(f"modules/database - Error parsing data/config.ini: {e}")
-        exit(1)
+class DatabaseClient:
+    """ Client for querying PostgreSQL database. """
 
-# Create a Database object connected to a PostgreSQL database.
-db = Database()
-db.bind(provider="postgres", user=config['Database']['DB_USER'], password=os.getenv("DB_PASSWORD"), host=config['Database']['DB_HOST'], port=config['Database']['DB_PORT'], database=config['Database']['DB_NAME'])
+    def __init__(self, application):
+        """ Initialize PostgreSQL client with connection parameters. """
 
-class Task(db.Entity):
-    """ Task entity/table representing individual tasks in an ODG. """
+        self.dbconf = application.bot_data['config']['Database']
 
-    text = Required(str)  # The task text/content
-    created_by = Required(str)  # Username or identifier of the creator
-    created_at = Required(datetime, default=datetime.now)  # Timestamp set at creation by default
-    priority = Required(int, default=0, index="priority_asc")  # Integer priority with an index name
-    odg = Required("ODG")  # Many-to-one relation to ODG (foreign key)
+        self.connection_params = {
+            'host': self.dbconf['DB_HOST'],
+            'port': self.dbconf['DB_PORT'],
+            'database': self.dbconf['DB_TEAM'],
+            'user': self.dbconf['DB_USER'],
+            'password': os.getenv("DB_PASSWORD")
+        }
 
-    def __str__(self):
-        """ String representation of the Task for display purposes. """
+        logging.info("modules/database - Database client initialized")
 
-        return f"📋 {self.text}\n👤 {self.created_by}"
+    def _get_connection(self):
+        """ Create and return a new database connection. """
+        try:
+            return psycopg2.connect(**self.connection_params)
+        except psycopg2.Error as e:
+            logging.error(f"modules/database - Database connection failed: {e}")
+            raise
 
-class ODG(db.Entity):
-    """ ODG entity/table representing a collection of tasks for a chat/thread. """
-    
-    chatId = Required(int, sql_type='BIGINT', size=64)  # Chat identifier stored as big integer
-    threadId = Optional(int, sql_type='BIGINT', size=64)  # Optional thread identifier (nullable)
-    tasks = Set(Task, reverse="odg")  # One-to-many relation: an ODG has many Tasks; reverse points to Task.odg
+    async def tags(self, kind: str) -> list[str]:
+        """ Return all tags for the given kind. """
 
-    def __str__(self):
-        """ String representation of the ODG and its tasks for display purposes. """
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cursor:
 
-        if self.tasks.is_empty():
-            return "ODG list is empty."
-        return "\n\n".join(str(task) for task in list(self.tasks.order_by(Task.created_at)))
+                if kind == "Area":
+                    query = f"""
+                        SELECT "Tag" FROM {self.dbconf['bases']['hrBase']}."Areas"
+                        ORDER BY "Tag"
+                    """
+                elif kind == "Workgroup" or kind == "Project":
+                    query = f"""
+                        SELECT "Tag" FROM {self.dbconf['bases']['hrBase']}."Projects"
+                        WHERE "Type" = '{kind}'
+                        ORDER BY "Tag"
+                    """
+                elif kind == "Role":
+                    query = f"""
+                        SELECT "Tag" FROM {self.dbconf['bases']['hrBase']}."Roles"
+                        ORDER BY "Tag"
+                    """
+                else:
+                    logging.error(f"modules/database - Unsupported kind: {kind}")
+                    raise ValueError(f"Unsupported kind: {kind}")
 
-    def reset(self):
-        """ Remove all tasks from this ODG. """
-        
-        for task in self.tasks:
-            task.delete()
-        self.tasks.clear()
+                cursor.execute(query)
+                rows = cursor.fetchall()
+                
+                if not rows:
+                    logging.warning(f"modules/database - No tags found for kind: {kind}")
+                    return []
+                
+                result = [f"@{row[0].lower().strip()}" for row in rows]
+                logging.info(f"modules/database - Retrieved {len(result)} tags for kind: {kind}")
+                return result
+        except Exception as e:
+            logging.error(f"modules/database - Error fetching tags for {kind}: {e}")
+            raise
+        finally:
+            conn.close()
 
-    def remove_task(self, task_idx: int) -> bool:
-        """ Remove a specific task by its index in the ordered list of tasks. """
+    async def members(self, tag: str, kind: str) -> list[str]:
+        """ Return Telegram usernames for the given tag. """
 
-        task = list(self.tasks.order_by(Task.created_at).limit(1, offset=task_idx))
-        if task:
-            task[0].delete()
-            return True
-        return False
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cursor:
+                
+                if kind == "Area":
+                    query = f"""
+                        SELECT p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
+                        JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Areas" m ON p."id" = m."People_id"
+                        JOIN {self.dbconf['bases']['hrBase']}."Areas" a ON m."Areas_id" = a."id"
+                        WHERE a."Tag" ILIKE %s AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable')
+                        ORDER BY p."Telegram_Username"
+                    """
+                elif kind == "Workgroup" or kind == "Project":
+                    query = f"""
+                        SELECT p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
+                        JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Projects" m ON p."id" = m."People_id"
+                        JOIN {self.dbconf['bases']['hrBase']}."Projects" pr ON m."Projects_id" = pr."id"
+                        WHERE pr."Tag" ILIKE %s AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable')
+                        ORDER BY p."Telegram_Username"
+                    """
+                elif kind == "Role":
+                    query = f"""
+                        SELECT p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
+                        JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Roles" m ON p."id" = m."People_id"
+                        JOIN {self.dbconf['bases']['hrBase']}."Roles" r ON m."Roles_id" = r."id"
+                        WHERE r."Tag" ILIKE %s AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable')
+                        ORDER BY p."Telegram_Username"
+                    """
 
-# Generate mapping between the above entities and the actual database tables.
-db.generate_mapping(create_tables=True)
+                cursor.execute(query, (tag.upper(),))
+                rows = cursor.fetchall()
+                
+                if not rows:
+                    logging.warning(f"modules/database - No members found for tag: {tag} of kind: {kind}")
+                    return []
+                
+                logging.info(f"modules/database - Retrieved {len(rows)} members for tag: {tag} of kind: {kind}")
+                return [f"{row[0].lower().strip()}" for row in rows if row[0]]
+        except Exception as e:
+            logging.error(f"modules/database - Error fetching members for tag {tag} of kind {kind}: {e}")
+            raise
+        finally:
+            conn.close()
+
+    async def email_from_username(self, username: str) -> str:
+        """ Lookup the Team Email for a given Telegram username. """
+
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cursor:
+                query = f"""
+                    SELECT "University_Email" FROM {self.dbconf['bases']['hrBase']}."People"
+                    WHERE "Telegram_Username" ILIKE %s
+                    LIMIT 1
+                """
+                cursor.execute(query, (f"@{username}",))
+                result = cursor.fetchone()
+                
+                if not result:
+                    logging.warning(f"modules/database - No email found for username: @{username}")
+                    return None
+
+                logging.info(f"modules/database - Retrieved email for username @{username}")
+                return result[0].replace("@studenti.unitn.it", "@eagletrt.it")
+        except Exception as e:
+            logging.error(f"modules/database - Error fetching email for username {username}: {e}")
+            raise
+        finally:
+            conn.close()
+
+    async def username_from_email(self, email: str) -> str:
+        """ Lookup the Telegram Username for a given Team Email. """
+
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cursor:
+                query = f"""
+                    SELECT "Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People"
+                    WHERE "University_Email" = %s
+                    LIMIT 1
+                """
+
+                email = email.replace("@eagletrt.it", "@studenti.unitn.it")
+                cursor.execute(query, (email,))
+                result = cursor.fetchone()
+                
+                if not result:
+                    logging.warning(f"modules/database - No username found for email: {email}")
+                    return None
+                
+                logging.info(f"modules/database - Retrieved username for email {email}")
+                return result[0] if result else None
+        except Exception as e:
+            logging.error(f"modules/database - Error fetching username for email {email}: {e}")
+            raise
+        finally:
+            conn.close()

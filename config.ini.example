@@ -3,8 +3,6 @@
 ConsoleLogLevel = 'INFO' # Logging level (e.g., INFO, WARNING, ERROR)
 FileLogLevel = 'WARNING' # File logging level (e.g., INFO, WARNING, ERROR)
 areas = ["CM", "HW"] # List of areas for the /question command
-NOCO_URL = 'https://database.domain.com' # URL of the NocoDB instance
-EAGLE_API_URL = 'https://api.domain.com' # URL of the Eagle API
 SHLINK_API_URL = 'https://shlink.domain.com' # URL of the Shlink API
 NAAS_API_URL = 'https://naas.domain.com' # URL of the NAAS API
 
@@ -13,6 +11,12 @@ DB_USER = 'user' # Database username
 DB_HOST = 'localhost' # Database host
 DB_PORT = '5432' # Database port
 DB_NAME = 'database' # Database name
+DB_TEAM = 'team' # Team database name
+DB_QUIZ = 'quizdb' # Quiz database name
+DB_API = 'api' # API database name
+
+[Database.bases]
+hrBase = 'qwertyuiop12345'
 
 [Whitelist]
 General = ['@everyone'] # Telegram usernames allowed bot access
@@ -21,14 +25,13 @@ Quiz = ['@it', '@sw', '@user123'] # Telegram usernames allowed to use quiz admin
 QRcodeGroups = ['-GroupID', '-GroupID'] # List of Telegram group IDs where QR code features are allowed
 
 [Features]
-EAgleAPIIntegration = false # Enable or disable integration with the Eagle API
-NocoDBIntegration = false # Enable or disable NocoDB integration (tags, mentions, inlab, quiz logging)
+InLabIntegration = true # Enable or disable InLab integration (inlab and ore)
+DatabaseIntegration = false # Enable or disable Database integration (tags, mentions, inlab, quiz logging, whitelist)
 ODGCommand = false # Enable or disable the /odg command
 IDCommand = false # Enable or disable the /info command
 MentionHandler = false # Enable or disable the mention handler (/tags command && mention responses)
 QRcodeGenerator = false # Enable or disable the QR code generator feature
 FSQuiz = false # Enable or disable the quiz feature
-FSQuizLogging = false # Enable or disable logging of quiz answers
 FSQuizScheduledSends = false # Enable or disable scheduled quiz sends
 Memes = true # Enable or disable all the memes features
 
@@ -46,26 +49,3 @@ GroupID = '-GroupID' # Telegram group ID for the Operations area
 Threads = ['3', '4'] # List of scheduled question thread IDs for the Operations area
 Scheduling = ['*/1 * * * *', '*/2 * * * *'] # List of cron scheduling strings for every thread in Threads
 area = ['CM', "MGT"] # List of area codes for the Operations area
-
-[NocoDB.members]
-table = 'qwertyuiop12345'
-view = 'qwertyuiop12345'
-
-[NocoDB.area]
-table = 'qwertyuiop12345'
-link = 'qwertyuiop12345'
-
-[NocoDB.workgroup]
-table = 'qwertyuiop12345'
-link = 'qwertyuiop12345'
-
-[NocoDB.project]
-table = 'qwertyuiop12345'
-link = 'qwertyuiop12345'
-
-[NocoDB.role]
-table = 'qwertyuiop12345'
-link = 'qwertyuiop12345'
-
-[NocoDB.quiz]
-table = 'qwertyuiop12345'

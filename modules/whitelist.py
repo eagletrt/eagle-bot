@@ -3,14 +3,14 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import asyncio
 
 class Whitelist:
-    """ Manages user whitelisting based on tags from NocoDB. """
+    """ Manages user whitelisting based on tags from Database. """
     
     def __init__(self, application):
-        """ Initialize the Whitelist with tag cache and NocoDB client. """
+        """ Initialize the Whitelist with tag cache and Database client. """
 
         self.whitelist: dict[str, list[str]] = {}
         self.tag_cache = application.bot_data['tag_cache']
-        self.nocodb = application.bot_data['nocodb']
+        self.database = application.bot_data['database']
         
         # run first cache update
         asyncio.create_task(self._update_cache())
@@ -30,21 +30,21 @@ class Whitelist:
         logging.info("modules/whitelist - Whitelist initialized and refresh scheduled with cron: " + cron)
         
     async def _update_cache(self) -> None:
-        """ Update the whitelist cache from NocoDB. """
+        """ Update the whitelist cache from Database. """
 
         tasks = []
         tag_map = []
 
         tag_types = {
-            "areas": "area",
-            "workgroups": "workgroup",
-            "projects": "project",
-            "roles": "role"
+            "areas": "Area",
+            "workgroups": "Workgroup",
+            "projects": "Project",
+            "roles": "Role"
         }
 
         for tag_key, tag_type in tag_types.items():
             for tag in self.tag_cache.get(tag_key, []):
-                tasks.append(self.nocodb.members(tag.lstrip("@"), tag_type))
+                tasks.append(self.database.members(tag.lstrip("@"), tag_type))
                 tag_map.append(tag)
 
         results = await asyncio.gather(*tasks)
@@ -59,7 +59,7 @@ class Whitelist:
 
         self.whitelist = new_whitelist
 
-        logging.info("modules/whitelist - Whitelist cache updated from NocoDB.")
+        logging.info("modules/whitelist - Whitelist cache updated from Database.")
 
         return
 

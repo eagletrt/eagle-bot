@@ -34,15 +34,15 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         logging.warning(f"commands/mentions - Unauthorized /mentions attempt by @{username}")
         return
 
-    # Load NocoDB and tag cache from bot data
-    nocodb = context.bot_data["nocodb"]
+    # Load Database and tag cache from bot data
+    database = context.bot_data["database"]
     tag_cache = context.bot_data["tag_cache"]
     whitelist = context.bot_data["whitelist"]
 
     message = ""
     temp_message = None
 
-    if "@inlab" in found_tags and context.bot_data['config']['Features']['EAgleAPIIntegration']:
+    if "@inlab" in found_tags and context.bot_data['config']['Features']['InLabIntegration'] and context.bot_data['config']['Features']['DatabaseIntegration']:
         temp_message = await update.message.reply_html("Dame n’atimo che i cato fora")
 
     # Iterate found tags and handle each; replies the list of members for matched tags
@@ -51,24 +51,24 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
         if tag_name == "inlab":
 
-            # Check if EagleAPI integration is enabled
-            if not context.bot_data['config']['Features']['EAgleAPIIntegration']:
-                logging.warning(f"commands/mentions - EagleAPI integration is disabled; cannot process @inlab request from @{username}")
+            # Check if InLab integration is enabled
+            if not context.bot_data['config']['Features']['InLabIntegration']:
+                logging.warning(f"commands/mentions - InLab integration is disabled; cannot process @inlab request from @{username}")
                 return
             
-            # Load the EagleAPI from bot data
-            eagle_api = context.bot_data["eagle_api"]
+            # Load the InLab from bot data
+            inlabClient = context.bot_data["inlabClient"]
 
-            # Call EagleAPI client; expected structure: {'people': [emails], 'count': n}
-            inlab_data = eagle_api.inlab()
+            # Call InLab client; expected structure: {'people': [emails], 'count': n}
+            inlab_data = inlabClient.inlab()
 
-            # Convert emails to NocoDB usernames/tags using the nocodb helper
+            # Convert emails to Database usernames/tags using the database helper
             tags = await asyncio.gather(*[
-                nocodb.username_from_email(email)
-                for email in inlab_data['people']
+                database.username_from_email(email)
+                for email in inlab_data
             ])
 
-            if inlab_data['count'] == 0:
+            if len(inlab_data) == 0:
                 members = []
             else:
                 members = tags

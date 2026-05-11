@@ -22,11 +22,11 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     
     # Extract services from bot_data
-    nocodb = context.bot_data["nocodb"]
-    eagle_api = context.bot_data["eagle_api"]
+    database = context.bot_data["database"]
+    inlabClient = context.bot_data["inlabClient"]
 
-    # Look up the user's email via NocoDB; this project stores mappings
-    team_email = await nocodb.email_from_username(username)
+    # Look up the user's email via Database; this project stores mappings
+    team_email = await database.email_from_username(username)
     if not team_email:
         logging.warning(f"commands/ore - No team email found for @{username}")
         await update.message.reply_html("Your Telegram username is not associated with a team email.")
@@ -38,9 +38,18 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         m = int((hours - h) * 60)
         return f"{h}h {m}m"
 
-    # Query EagleAPI for hours and pretty-print
-    ore_data = eagle_api.oreLab(team_email.split('@')[0])
-    ore_str = pretty_time(ore_data['ore'])
+    # Query InLab for hours and pretty-print
+    try:
+        ore_data = inlabClient.oreLab(team_email)
+    except Exception:
+        logging.exception(f"commands/ore - Failed to retrieve lab hours for @{username}")
+        await update.message.reply_html("Unable to retrieve your lab hours right now.")
+        return
+
+    if not isinstance(ore_data, (int, float)):
+        ore_data = 0
+
+    ore_str = pretty_time(ore_data)
 
     logging.info(f"commands/ore - User @{username} has spent {ore_str} in the lab this month")
 
