@@ -11,7 +11,7 @@ with open(os.getenv("CONFIG_PATH"), "rb") as f:
         logging.error(f"modules/nocodb - Error parsing data/config.ini: {e}")
         exit(1)
 
-class NocoDB:
+class DatabaseClient:
     """ Minimal client for querying specific tables in a NocoDB instance. """
 
     def __init__(self, base_url: str, api_key: str):

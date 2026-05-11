@@ -1,7 +1,7 @@
 import os
 import logging
 import tomllib
-from modules.database import Database
+from modules.database import DatabaseClient
 from modules.api_client import EagleAPI
 from modules.shlink import ShlinkAPI
 from modules.whitelist import Whitelist
@@ -175,7 +175,7 @@ def main() -> None:
 
     # Initialize Database client if enabled
     if config['Features']['DatabaseIntegration']:
-        database = Database(os.getenv("DB_PASSWORD"))
+        database = DatabaseClient(os.getenv("DB_PASSWORD"))
         application.bot_data["database"] = database
         logging.info("main/main - Database integration enabled.")
 
