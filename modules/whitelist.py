@@ -3,10 +3,10 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import asyncio
 
 class Whitelist:
-    """ Manages user whitelisting based on tags from NocoDB. """
+    """ Manages user whitelisting based on tags from Database. """
     
     def __init__(self, application):
-        """ Initialize the Whitelist with tag cache and NocoDB client. """
+        """ Initialize the Whitelist with tag cache and Database client. """
 
         self.whitelist: dict[str, list[str]] = {}
         self.tag_cache = application.bot_data['tag_cache']
@@ -30,7 +30,7 @@ class Whitelist:
         logging.info("modules/whitelist - Whitelist initialized and refresh scheduled with cron: " + cron)
         
     async def _update_cache(self) -> None:
-        """ Update the whitelist cache from NocoDB. """
+        """ Update the whitelist cache from Database. """
 
         tasks = []
         tag_map = []
@@ -59,7 +59,7 @@ class Whitelist:
 
         self.whitelist = new_whitelist
 
-        logging.info("modules/whitelist - Whitelist cache updated from NocoDB.")
+        logging.info("modules/whitelist - Whitelist cache updated from Database.")
 
         return
 
