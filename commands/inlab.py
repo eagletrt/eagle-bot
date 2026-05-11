@@ -34,18 +34,18 @@ async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     # Convert emails to Database usernames/tags using the database helper
     tags = await asyncio.gather(
-        *[database.username_from_email(email) for email in inlab_data['people']]
+        *[database.username_from_email(email) for email in inlab_data]
     )
 
     # Log the in-lab data for debugging
     logging.info(f"commands/inlab - User @{username} requested correctly in-lab data: {inlab_data}")
 
     # Reply with a message depending on the count
-    if inlab_data['count'] == 0:
+    if len(inlab_data) == 0:
         await message.edit_text("Nobody is in the lab right now.", parse_mode='HTML')
     else:
         await message.edit_text(
-            f"There are <b>{inlab_data['count']}</b> people in the lab: \n{' '.join(tags)}",
+            f"There are <b>{len(inlab_data)}</b> people in the lab: \n{' '.join(tags)}",
             parse_mode='HTML'
         )
     return

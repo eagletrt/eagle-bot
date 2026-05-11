@@ -65,10 +65,10 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             # Convert emails to Database usernames/tags using the database helper
             tags = await asyncio.gather(*[
                 database.username_from_email(email)
-                for email in inlab_data['people']
+                for email in inlab_data
             ])
 
-            if inlab_data['count'] == 0:
+            if len(inlab_data) == 0:
                 members = []
             else:
                 members = tags
