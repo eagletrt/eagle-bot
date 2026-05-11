@@ -18,9 +18,15 @@ class DatabaseClient:
             'password': os.getenv("DB_PASSWORD")
         }
 
+        logging.info("modules/database - Database client initialized")
+
     def _get_connection(self):
         """ Create and return a new database connection. """
-        return psycopg2.connect(**self.connection_params)
+        try:
+            return psycopg2.connect(**self.connection_params)
+        except psycopg2.Error as e:
+            logging.error(f"modules/database - Database connection failed: {e}")
+            raise
 
     async def tags(self, kind: str) -> list[str]:
         """ Return all tags for the given kind. """
@@ -50,12 +56,15 @@ class DatabaseClient:
                 rows = cursor.fetchall()
                 
                 if not rows:
+                    logging.warning(f"modules/database - No tags found for kind: {kind}")
                     return []
                 
-                # Format tags with @ prefix and lowercase
-                return [f"@{row[0].lower().strip()}" for row in rows]
-        finally:
-            conn.close()
+                result = [f"@{row[0].lower().strip()}" for row in rows]
+                logging.info(f"modules/database - Retrieved {len(result)} tags for kind: {kind}")
+                return result
+        except Exception as e:
+            logging.error(f"modules/database - Error fetching tags for {kind}: {e}")
+            raise
 
     async def members(self, tag: str, kind: str) -> list[str]:
         """ Return Telegram usernames for the given tag. """
@@ -93,9 +102,14 @@ class DatabaseClient:
                 rows = cursor.fetchall()
                 
                 if not rows:
+                    logging.warning(f"modules/database - No members found for tag: {tag} of kind: {kind}")
                     return []
                 
+                logging.info(f"modules/database - Retrieved {len(rows)} members for tag: {tag} of kind: {kind}")
                 return [f"{row[0].lower().strip()}" for row in rows if row[0]]
+        except Exception as e:
+            logging.error(f"modules/database - Error fetching members for tag {tag} of kind {kind}: {e}")
+            raise
         finally:
             conn.close()
 
@@ -113,7 +127,15 @@ class DatabaseClient:
                 cursor.execute(query, (f"@{username}",))
                 result = cursor.fetchone()
                 
+                if not result:
+                    logging.warning(f"modules/database - No email found for username: @{username}")
+                    return None
+
+                logging.info(f"modules/database - Retrieved email for username @{username}")
                 return result[0].replace("@studenti.unitn.it", "@eagletrt.it")
+        except Exception as e:
+            logging.error(f"modules/database - Error fetching email for username {username}: {e}")
+            raise
         finally:
             conn.close()
 
@@ -133,6 +155,14 @@ class DatabaseClient:
                 cursor.execute(query, (email,))
                 result = cursor.fetchone()
                 
+                if not result:
+                    logging.warning(f"modules/database - No username found for email: {email}")
+                    return None
+                
+                logging.info(f"modules/database - Retrieved username for email {email}")
                 return result[0] if result else None
+        except Exception as e:
+            logging.error(f"modules/database - Error fetching username for email {email}: {e}")
+            raise
         finally:
             conn.close()
