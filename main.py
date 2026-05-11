@@ -229,10 +229,6 @@ def main() -> None:
         application.bot_data["areas"] = config['Settings']['areas']
         logging.info("main/main - Quiz feature enabled and handler registered.")
 
-    if config['Features']['FSQuizLogging'] and config['Features']['FSQuiz'] and config['Features']['DatabaseIntegration']:
-        application.add_handler(PollAnswerHandler(question_answer))
-        logging.info("main/main - Quiz logging enabled and handlers registered.")
-
     # Start polling
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 

@@ -32,7 +32,6 @@ IDCommand = false # Enable or disable the /info command
 MentionHandler = false # Enable or disable the mention handler (/tags command && mention responses)
 QRcodeGenerator = false # Enable or disable the QR code generator feature
 FSQuiz = false # Enable or disable the quiz feature
-FSQuizLogging = false # Enable or disable logging of quiz answers
 FSQuizScheduledSends = false # Enable or disable scheduled quiz sends
 Memes = true # Enable or disable all the memes features
 
