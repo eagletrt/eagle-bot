@@ -1,155 +1,138 @@
-import httpx
-import tomllib
+import psycopg2
 import logging
 import os
 
-# Load configuration from config.ini
-with open(os.getenv("CONFIG_PATH"), "rb") as f:
-    try:
-        config = tomllib.load(f)
-    except tomllib.TOMLDecodeError as e:
-        logging.error(f"modules/database - Error parsing data/config.ini: {e}")
-        exit(1)
-
 class DatabaseClient:
-    """ Minimal client for querying specific tables in a NocoDB instance. """
+    """ Client for querying PostgreSQL database. """
 
-    def __init__(self, base_url: str, api_key: str):
-        """ Initialize the NocoDB client with base URL and API key. """
+    def __init__(self, application):
+        """ Initialize PostgreSQL client with connection parameters. """
 
-        # store base url without trailing slash to make URL composition predictable
-        self.base_url = base_url.rstrip("/")
+        self.dbconf = application.bot_data['config']['Database']
 
-        # reuse a session for connection pooling and consistent headers
-        self._session = httpx.AsyncClient(timeout=60.0)
-        self._session.headers.update({
-            # NocoDB expects the API key in the 'xc-token' header
-            'xc-token': api_key,
-            'Content-Type': 'application/json'
-        })
+        self.connection_params = {
+            'host': self.dbconf['DB_HOST'],
+            'port': self.dbconf['DB_PORT'],
+            'database': self.dbconf['DB_TEAM'],
+            'user': self.dbconf['DB_USER'],
+            'password': os.getenv("DB_PASSWORD")
+        }
+
+    def _get_connection(self):
+        """ Create and return a new database connection. """
+        return psycopg2.connect(**self.connection_params)
 
     async def tags(self, kind: str) -> list[str]:
         """ Return all tags for the given kind. """
 
-        # fetch all records from the relevant table, requesting only the Tag field
-        res = await self._session.get(
-            f"{self.base_url}/api/v2/tables/{config['NocoDB'][kind]['table']}/records",
-            params={"limit": 1000, "fields": "Tag"}
-        )
-        res.raise_for_status()
-        items = res.json().get("list")
-        if not items:
-            return []
-        return [f"@{item['Tag'].lower().strip()}" for item in items]
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cursor:
+
+                if kind == "Area":
+                    query = f"""
+                        SELECT "Tag" FROM {self.dbconf['bases']['hrBase']}."Areas"
+                        ORDER BY "Tag"
+                    """
+                elif kind == "Workgroup" or kind == "Project":
+                    query = f"""
+                        SELECT "Tag" FROM {self.dbconf['bases']['hrBase']}."Projects"
+                        WHERE "Type" = '{kind}'
+                        ORDER BY "Tag"
+                    """
+                elif kind == "Role":
+                    query = f"""
+                        SELECT "Tag" FROM {self.dbconf['bases']['hrBase']}."Roles"
+                        ORDER BY "Tag"
+                    """
+
+                cursor.execute(query)
+                rows = cursor.fetchall()
+                
+                if not rows:
+                    return []
+                
+                # Format tags with @ prefix and lowercase
+                return [f"@{row[0].lower().strip()}" for row in rows]
+        finally:
+            conn.close()
 
     async def members(self, tag: str, kind: str) -> list[str]:
-        """ Return Telegram usernames for the given tag and kind. """
+        """ Return Telegram usernames for the given tag. """
 
-        # find the NocoDB internal Id for the record that matches the tag
-        nocoid_res = await self._session.get(
-            f"{self.base_url}/api/v2/tables/{config['NocoDB'][kind]['table']}/records",
-            params={"limit": 1000, "where": f"(Tag,like,{tag})", "fields": "Id"}
-        )
-        nocoid_res.raise_for_status()
-        nocoid = nocoid_res.json().get("list")[0].get("Id")
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cursor:
+                
+                if kind == "Area":
+                    query = f"""
+                        SELECT p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
+                        JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Areas" m ON p."id" = m."People_id"
+                        JOIN {self.dbconf['bases']['hrBase']}."Areas" a ON m."Areas_id" = a."id"
+                        WHERE a."Tag" ILIKE %s AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable')
+                        ORDER BY p."Telegram_Username"
+                    """
+                elif kind == "Workgroup" or kind == "Project":
+                    query = f"""
+                        SELECT p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
+                        JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Projects" m ON p."id" = m."People_id"
+                        JOIN {self.dbconf['bases']['hrBase']}."Projects" pr ON m."Projects_id" = pr."id"
+                        WHERE pr."Tag" ILIKE %s AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable')
+                        ORDER BY p."Telegram_Username"
+                    """
+                elif kind == "Role":
+                    query = f"""
+                        SELECT p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
+                        JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Roles" m ON p."id" = m."People_id"
+                        JOIN {self.dbconf['bases']['hrBase']}."Roles" r ON m."Roles_id" = r."id"
+                        WHERE r."Tag" ILIKE %s AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable')
+                        ORDER BY p."Telegram_Username"
+                    """
 
-        # fetch linked member records for that record via the link endpoint
-        res = await self._session.get(
-            f"{self.base_url}/api/v2/tables/{config['NocoDB'][kind]['table']}/links/{config['NocoDB'][kind]['link']}/records/{nocoid}",
-            params={"limit": 1000}
-        )
-        res.raise_for_status()
-        res = res.json().get("list")
-        if not res:
-            return []
-
-        member_ids = [str(item["Id"]) for item in res]
-
-        # fetch member records by Id and request only the Telegram Username field
-        params = {
-            "limit": 1000,
-            "where": f"(Id,in,{','.join(member_ids)})",
-            "fields": "Telegram Username",
-            "viewId": config['NocoDB']['members']["view"] # use view to filter out inactive members
-        }
-
-        res = await self._session.get(
-            f"{self.base_url}/api/v2/tables/{config['NocoDB']['members']['table']}/records",
-            params=params
-        )
-
-        res.raise_for_status()
-
-        items = res.json().get("list")
-        return [f"{item['Telegram Username'].lower().strip()}" for item in items if item.get("Telegram Username")]
+                cursor.execute(query, (tag.upper(),))
+                rows = cursor.fetchall()
+                
+                if not rows:
+                    return []
+                
+                return [f"{row[0].lower().strip()}" for row in rows if row[0]]
+        finally:
+            conn.close()
 
     async def email_from_username(self, username: str) -> str:
         """ Lookup the Team Email for a given Telegram username. """
 
-        res = await self._session.get(
-            f"{self.base_url}/api/v2/tables/{config['NocoDB']['members']['table']}/records",
-            params={
-                "limit": 1000,
-                "where": f"(Telegram Username,like,@{username})~or(Telegram Username,like,{username})",
-                "fields": "Team Email"
-            }
-        )
-        res.raise_for_status()
-        items = res.json().get("list")
-
-        # if items found return Team Email (or empty string if field missing), else None
-        return items[0].get("Team Email", "") if items else None
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cursor:
+                query = f"""
+                    SELECT "University_Email" FROM {self.dbconf['bases']['hrBase']}."People"
+                    WHERE "Telegram_Username" ILIKE %s
+                    LIMIT 1
+                """
+                cursor.execute(query, (f"@{username}",))
+                result = cursor.fetchone()
+                
+                return result[0].replace("@studenti.unitn.it", "@eagletrt.it")
+        finally:
+            conn.close()
 
     async def username_from_email(self, email: str) -> str:
         """ Lookup the Telegram Username for a given Team Email. """
 
-        res = await self._session.get(
-            f"{self.base_url}/api/v2/tables/{config['NocoDB']['members']['table']}/records",
-            params={
-                "limit": 1000,
-                "where": f"(Team Email,eq,{email})",
-                "fields": "Telegram Username"
-            }
-        )
-        res.raise_for_status()
-        items = res.json().get("list")
-        return items[0].get("Telegram Username", "") if items else None
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cursor:
+                query = f"""
+                    SELECT "Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People"
+                    WHERE "University_Email" = %s
+                    LIMIT 1
+                """
 
-    async def quiz_answer_log(self, username: str, is_correct: bool) -> None:
-        """ Log a question answer attempt for the given username. """
-
-        table = config['NocoDB']['quiz']['table']
-        url = f"{self.base_url}/api/v2/tables/{table}/records"
-
-        # Find existing record for the username
-        find_params = {
-            "where": f"(username,eq,{username})",
-            "fields": "Id,answered,correct",
-            "limit": 1
-        }
-        res = await self._session.get(url, params=find_params)
-        res.raise_for_status()
-        records = res.json().get("list", [])
-
-        if records:
-            # User exists, update their stats
-            record = records[0]
-            record_id = record['Id']
-
-            payload = {
-                "Id": record_id,
-                "answered": record.get('answered', 0) + 1,
-                "correct": record.get('correct', 0) + (1 if is_correct else 0)
-            }
-
-            update_res = await self._session.patch(f"{url}", json=payload)
-            update_res.raise_for_status()
-        else:
-            # User does not exist, create a new record
-            payload = {
-                "username": username,
-                "answered": 1,
-                "correct": 1 if is_correct else 0
-            }
-            create_res = await self._session.post(url, json=payload)
-            create_res.raise_for_status()
+                email = email.replace("@eagletrt.it", "@studenti.unitn.it")
+                cursor.execute(query, (email,))
+                result = cursor.fetchone()
+                
+                return result[0] if result else None
+        finally:
+            conn.close()
