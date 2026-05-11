@@ -16,7 +16,6 @@ DB_TEAM = 'team' # Team database name
 DB_QUIZ = 'quizdb' # Quiz database name
 
 [Database.bases]
-quizBase = 'qwertyuiop12345'
 hrBase = 'qwertyuiop12345'
 
 [Whitelist]
