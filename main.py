@@ -174,7 +174,7 @@ def main() -> None:
 
     # Initialize Database client if enabled
     if config['Features']['DatabaseIntegration']:
-        database = DatabaseClient(os.getenv("DB_PASSWORD"))
+        database = DatabaseClient(application)
         application.bot_data["database"] = database
         logging.info("main/main - Database integration enabled.")
 

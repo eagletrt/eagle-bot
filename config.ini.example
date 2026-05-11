@@ -12,6 +12,7 @@ DB_USER = 'user' # Database username
 DB_HOST = 'localhost' # Database host
 DB_PORT = '5432' # Database port
 DB_NAME = 'database' # Database name
+DB_TEAM = 'team' # Team database name
 DB_QUIZ = 'quizdb' # Quiz database name
 
 [Database.bases]
