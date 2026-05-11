@@ -59,3 +59,6 @@ class ODG(db.Entity):
             task[0].delete()
             return True
         return False
+
+# Generate mapping between the above entities and the actual database tables.
+db.generate_mapping(create_tables=True)
