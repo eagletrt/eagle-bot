@@ -13,6 +13,7 @@ DB_PORT = '5432' # Database port
 DB_NAME = 'database' # Database name
 DB_TEAM = 'team' # Team database name
 DB_QUIZ = 'quizdb' # Quiz database name
+DB_API = 'api' # API database name
 
 [Database.bases]
 hrBase = 'qwertyuiop12345'

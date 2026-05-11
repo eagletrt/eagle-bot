@@ -57,10 +57,10 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 return
             
             # Load the InLab from bot data
-            inlab = context.bot_data["inlab"]
+            inlabClient = context.bot_data["inlabClient"]
 
             # Call InLab client; expected structure: {'people': [emails], 'count': n}
-            inlab_data = inlab.inlab()
+            inlab_data = inlabClient.inlab()
 
             # Convert emails to Database usernames/tags using the database helper
             tags = await asyncio.gather(*[

@@ -204,8 +204,8 @@ def main() -> None:
 
     # Conditional registration of InLab handlers
     if config['Features']['InLabIntegration'] and config['Features']['DatabaseIntegration']:
-        inlab = InLabClient()
-        application.bot_data["inlab"] = inlab
+        inlabClient = InLabClient(application)
+        application.bot_data["inlab"] = inlabClient
         application.add_handler(CommandHandler("inlab", inlab))
         application.add_handler(CommandHandler("ore", ore))
         logging.info("main/main - InLab integration enabled and handlers registered.")

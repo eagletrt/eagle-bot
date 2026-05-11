@@ -23,7 +23,7 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     # Extract services from bot_data
     database = context.bot_data["database"]
-    inlab = context.bot_data["inlab"]
+    inlabClient = context.bot_data["inlabClient"]
 
     # Look up the user's email via Database; this project stores mappings
     team_email = await database.email_from_username(username)
@@ -39,7 +39,7 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return f"{h}h {m}m"
 
     # Query InLab for hours and pretty-print
-    ore_data = inlab.oreLab(team_email.split('@')[0])
+    ore_data = inlabClient.oreLab(team_email.split('@')[0])
     ore_str = pretty_time(ore_data['ore'])
 
     logging.info(f"commands/ore - User @{username} has spent {ore_str} in the lab this month")
