@@ -25,7 +25,7 @@
 ## Main Features
 
 - **Agenda Management (ODG)**: Add, remove, view, and reset a shared task list for each chat or thread.
-- **NocoDB Integration**: Retrieve information about members, areas, workgroups, and projects via REST API.
+- **Database Integration**: Retrieve information about members, areas, workgroups, and projects via PostgreSQL and Pony ORM.
 - **Interaction with E-Agle API**: Monitor who is present in the lab and view the monthly hours of each member.
 - **Mention Notifications**: By mentioning a tag (e.g., `@sw`), the bot responds with the list of associated members, facilitating communication.
 - **Quiz Management**: Create and manage interactive quizzes for team training and engagement.
@@ -39,7 +39,7 @@ The bot is built on a modular architecture that separates responsibilities into 
 1.  **Core (`main.py`)**: This is the application's entry point. It manages the bot's lifecycle, initializes clients for external APIs, and registers command and mention handlers based on the configuration.
 2.  **Command Handlers (`/commands`)**: Each file in this directory implements the logic for a specific command (e.g., `/odg`, `/inlab`). This approach keeps the code organized and easy to extend.
 3.  **Modules (`/modules`)**: Contains clients and wrappers for interacting with external services and the local database.
-    - `nocodb.py`: Client for NocoDB APIs.
+    - `database.py`: Client for the team database (PostgreSQL with Pony ORM).
     - `api_client.py`: Client for E-Agle's internal APIs.
     - `odg.py`: Manager for the ODG database (PostgreSQL with Pony ORM).
     - `quiz.py`: Logic for quiz management.
@@ -57,7 +57,7 @@ The bot is built on a modular architecture that separates responsibilities into 
 │   └── ...
 ├── data/             # Persistent data (logs, configuration)
 ├── modules/          # Reusable modules (API clients, DB)
-│   ├── nocodb.py
+│   ├── database.py
 │   ├── api_client.py
 │   ├── odg.py
 │   └── ...
@@ -72,7 +72,7 @@ The bot is built on a modular architecture that separates responsibilities into 
 
 - Python 3.9+
 - Docker and Docker Compose (for running in a container)
-- Access to NocoDB and E-Agle APIs
+- Access to team databases and E-Agle APIs
 
 ## Installation and Startup
 
@@ -101,7 +101,6 @@ The bot is built on a modular architecture that separates responsibilities into 
 
     ```bash
     export TELEGRAM_BOT_TOKEN="your_token"
-    export NOCO_API_KEY="your_api_key"
     export SHLINK_API_KEY="your_api_key"
     export CONFIG_PATH="data/config.ini"
     export DB_PASSWORD="your_db_password"
@@ -124,7 +123,6 @@ The recommended way to run the bot in production is via Docker, to ensure an iso
 
     ```env
     TELEGRAM_BOT_TOKEN=...
-    NOCO_API_KEY=...
     SHLINK_API_KEY=...
     CONFIG_PATH=...
     DB_PASSWORD=...
@@ -146,7 +144,6 @@ The following environment variables are **mandatory** for authentication with ex
 | Variable             | Description                                  |
 | -------------------- | -------------------------------------------- |
 | `TELEGRAM_BOT_TOKEN` | Authentication token for the Telegram bot.   |
-| `NOCO_API_KEY`       | API key for authentication with NocoDB.      |
 | `SHLINK_API_KEY`     | API key for authentication with Shlink.      |
 | `DB_PASSWORD`        | Password for the PostgreSQL database.        |
 
@@ -181,7 +178,7 @@ This file is divided into sections:
 
 ### Mentions
 
-You can mention a tag (previously configured in NocoDB) to notify all associated members.
+You can mention a tag (previously configured in the database) to notify all associated members.
 
 - **Syntax**: `@<tag_name>`
 - **Example**: `@sw` will mention all members of the "Software" group.

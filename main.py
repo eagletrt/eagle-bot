@@ -1,7 +1,7 @@
 import os
 import logging
 import tomllib
-from modules.nocodb import NocoDB
+from modules.database import Database
 from modules.api_client import EagleAPI
 from modules.shlink import ShlinkAPI
 from modules.whitelist import Whitelist
@@ -63,13 +63,13 @@ logging.basicConfig(level=logging.INFO, handlers=[console_handler])
 async def ps(application: Application) -> None:
     """Post-initialization hook to set bot commands and start scheduler if enabled."""
 
-    if application.bot_data["config"]['Features']['NocoDBIntegration']:
+    if application.bot_data["config"]['Features']['DatabaseIntegration']:
         # Initialize tag cache
         tag_cache = {
-            "areas": await application.bot_data['nocodb'].tags('area'),
-            "workgroups": await application.bot_data['nocodb'].tags('workgroup'),
-            "projects": await application.bot_data['nocodb'].tags('project'),
-            "roles": await application.bot_data['nocodb'].tags('role')
+            "areas": await application.bot_data['database'].tags('area'),
+            "workgroups": await application.bot_data['database'].tags('workgroup'),
+            "projects": await application.bot_data['database'].tags('project'),
+            "roles": await application.bot_data['database'].tags('role')
         }
         application.bot_data["tag_cache"] = tag_cache
         logging.info("main/main - Tag cache initialized.")
@@ -78,7 +78,7 @@ async def ps(application: Application) -> None:
         setup_scheduler(application)
         logging.info("main/main - Scheduled quiz sends enabled.")
 
-    if application.bot_data["config"]['Features']['Whitelist'] and application.bot_data["config"]['Features']['NocoDBIntegration'] and application.bot_data["config"]['Features']['MentionHandler']:
+    if application.bot_data["config"]['Features']['Whitelist'] and application.bot_data["config"]['Features']['DatabaseIntegration'] and application.bot_data["config"]['Features']['MentionHandler']:
         application.bot_data["whitelist"] = Whitelist(application)
         logging.info("main/main - Whitelist feature enabled.")
 
@@ -115,7 +115,7 @@ def main() -> None:
     """Main function to set up and run the bot."""
 
     # Validate environment variables
-    required_vars = ["TELEGRAM_BOT_TOKEN", "NOCO_API_KEY", "SHLINK_API_KEY", "CONFIG_PATH", "DB_PASSWORD"]
+    required_vars = ["TELEGRAM_BOT_TOKEN", "SHLINK_API_KEY", "CONFIG_PATH", "DB_PASSWORD"]
     missing_vars = [var for var in required_vars if not os.getenv(var)]
     if missing_vars:
         if "TELEGRAM_BOT_TOKEN" in missing_vars:
@@ -124,13 +124,10 @@ def main() -> None:
         if "CONFIG_PATH" in missing_vars:
             logging.error("main/main - CONFIG_PATH environment variable is required but not set.")
             exit(1)
-        if "NOCO_API_KEY" in missing_vars and config['Features']['NocoDBIntegration']:
-            logging.error("main/main - NOCO_API_KEY environment variable is required but not set.")
-            exit(1)
         if "SHLINK_API_KEY" in missing_vars and config['Features']['QRcodeGenerator']:
             logging.error("main/main - SHLINK_API_KEY environment variable is required but not set.")
             exit(1)
-        if "DB_PASSWORD" in missing_vars and (config['Features']['ODGCommand'] or config['Features']['FSQuiz']):
+        if "DB_PASSWORD" in missing_vars and (config['Features']['ODGCommand'] or config['Features']['FSQuiz'] or config['Features']['DatabaseIntegration']):
             logging.error("main/main - DB_PASSWORD environment variable is required but not set.")
             exit(1)
 
@@ -176,11 +173,11 @@ def main() -> None:
     # Store config in bot_data for global access
     application.bot_data["config"] = config
 
-    # Initialize NocoDB client if enabled
-    if config['Features']['NocoDBIntegration']:
-        nocodb = NocoDB(config['Settings']['NOCO_URL'], os.getenv("NOCO_API_KEY"))
-        application.bot_data["nocodb"] = nocodb
-        logging.info("main/main - NocoDB integration enabled.")
+    # Initialize Database client if enabled
+    if config['Features']['DatabaseIntegration']:
+        database = Database(os.getenv("DB_PASSWORD"))
+        application.bot_data["database"] = database
+        logging.info("main/main - Database integration enabled.")
 
     # Register handlers
     application.add_handler(CommandHandler("start", start))
@@ -191,7 +188,7 @@ def main() -> None:
         logging.info("main/main - Memes are enabled and handlers registered")
 
     # Conditional registration of mention handler and /tags command
-    if config['Features']['MentionHandler'] and config['Features']['NocoDBIntegration'] and config['Features']['Whitelist']:
+    if config['Features']['MentionHandler'] and config['Features']['DatabaseIntegration']:
         application.add_handler(CommandHandler("tags", tags))
         application.add_handler(MessageHandler((filters.TEXT | filters.CAPTION) & ~filters.COMMAND, mention_handler))
         logging.info("main/main - Mention handler and /tags command enabled and handlers registered.")
@@ -232,7 +229,7 @@ def main() -> None:
         application.bot_data["areas"] = config['Settings']['areas']
         logging.info("main/main - Quiz feature enabled and handler registered.")
 
-    if config['Features']['FSQuizLogging'] and config['Features']['FSQuiz'] and config['Features']['NocoDBIntegration']:
+    if config['Features']['FSQuizLogging'] and config['Features']['FSQuiz'] and config['Features']['DatabaseIntegration']:
         application.add_handler(PollAnswerHandler(question_answer))
         logging.info("main/main - Quiz logging enabled and handlers registered.")
 
