@@ -22,15 +22,15 @@ async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         logging.warning(f"commands/inlab - Unauthorized /inlab attempt by @{username}")
         return
 
-    # Load the EagleAPI and Database clients from bot data
-    eagle_api = context.bot_data["eagle_api"]
+    # Load the InLab and Database clients from bot data
+    inlab = context.bot_data["inlab"]
     database = context.bot_data["database"]
 
     # Send temporary message
     message = await update.message.reply_html("Dame n’atimo che i cato fora")
 
-    # Call EagleAPI client; expected structure: {'people': [emails], 'count': n}
-    inlab_data = eagle_api.inlab()
+    # Call InLab client; expected structure: {'people': [emails], 'count': n}
+    inlab_data = inlab.inlab()
 
     # Convert emails to Database usernames/tags using the database helper
     tags = await asyncio.gather(

@@ -42,7 +42,7 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     message = ""
     temp_message = None
 
-    if "@inlab" in found_tags and context.bot_data['config']['Features']['EAgleAPIIntegration']:
+    if "@inlab" in found_tags and context.bot_data['config']['Features']['InLabIntegration'] and context.bot_data['config']['Features']['DatabaseIntegration']:
         temp_message = await update.message.reply_html("Dame n’atimo che i cato fora")
 
     # Iterate found tags and handle each; replies the list of members for matched tags
@@ -51,16 +51,16 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
         if tag_name == "inlab":
 
-            # Check if EagleAPI integration is enabled
-            if not context.bot_data['config']['Features']['EAgleAPIIntegration']:
-                logging.warning(f"commands/mentions - EagleAPI integration is disabled; cannot process @inlab request from @{username}")
+            # Check if InLab integration is enabled
+            if not context.bot_data['config']['Features']['InLabIntegration']:
+                logging.warning(f"commands/mentions - InLab integration is disabled; cannot process @inlab request from @{username}")
                 return
             
-            # Load the EagleAPI from bot data
-            eagle_api = context.bot_data["eagle_api"]
+            # Load the InLab from bot data
+            inlab = context.bot_data["inlab"]
 
-            # Call EagleAPI client; expected structure: {'people': [emails], 'count': n}
-            inlab_data = eagle_api.inlab()
+            # Call InLab client; expected structure: {'people': [emails], 'count': n}
+            inlab_data = inlab.inlab()
 
             # Convert emails to Database usernames/tags using the database helper
             tags = await asyncio.gather(*[

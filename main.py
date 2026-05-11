@@ -2,7 +2,7 @@ import os
 import logging
 import tomllib
 from modules.database import DatabaseClient
-from modules.api_client import EagleAPI
+from modules.inlab import InLabClient
 from modules.shlink import ShlinkAPI
 from modules.whitelist import Whitelist
 from telegram import Update, BotCommand
@@ -91,8 +91,8 @@ async def ps(application: Application) -> None:
     if application.bot_data["config"]['Features']['ODGCommand']:
         commands.append(BotCommand("odg", "Show ODG"))
 
-    # Conditional addition of Eagle API commands
-    if application.bot_data["config"]['Features']['EAgleAPIIntegration'] and application.bot_data["config"]['Features']['DatabaseIntegration']:
+    # Conditional addition of InLab commands
+    if application.bot_data["config"]['Features']['InLabIntegration'] and application.bot_data["config"]['Features']['DatabaseIntegration']:
         commands.extend([
             BotCommand("inlab", "People currently in lab"),
             BotCommand("ore", "Your month's lab hours"),
@@ -202,13 +202,13 @@ def main() -> None:
         application.add_handler(CommandHandler("odg", odg))
         logging.info("main/main - ODG command enabled and handler registered.")
 
-    # Conditional registration of Eagle API handlers
-    if config['Features']['EAgleAPIIntegration'] and config['Features']['DatabaseIntegration']:
-        eagle_api = EagleAPI(config['Settings']['EAGLE_API_URL'])
-        application.bot_data["eagle_api"] = eagle_api
+    # Conditional registration of InLab handlers
+    if config['Features']['InLabIntegration'] and config['Features']['DatabaseIntegration']:
+        inlab = InLabClient()
+        application.bot_data["inlab"] = inlab
         application.add_handler(CommandHandler("inlab", inlab))
         application.add_handler(CommandHandler("ore", ore))
-        logging.info("main/main - Eagle API integration enabled and handlers registered.")
+        logging.info("main/main - InLab integration enabled and handlers registered.")
 
     # Conditional registration of QR code generator handler
     if config['Features']['QRcodeGenerator']:

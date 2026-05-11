@@ -23,7 +23,7 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     # Extract services from bot_data
     database = context.bot_data["database"]
-    eagle_api = context.bot_data["eagle_api"]
+    inlab = context.bot_data["inlab"]
 
     # Look up the user's email via Database; this project stores mappings
     team_email = await database.email_from_username(username)
@@ -38,8 +38,8 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         m = int((hours - h) * 60)
         return f"{h}h {m}m"
 
-    # Query EagleAPI for hours and pretty-print
-    ore_data = eagle_api.oreLab(team_email.split('@')[0])
+    # Query InLab for hours and pretty-print
+    ore_data = inlab.oreLab(team_email.split('@')[0])
     ore_str = pretty_time(ore_data['ore'])
 
     logging.info(f"commands/ore - User @{username} has spent {ore_str} in the lab this month")

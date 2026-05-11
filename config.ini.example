@@ -3,7 +3,6 @@
 ConsoleLogLevel = 'INFO' # Logging level (e.g., INFO, WARNING, ERROR)
 FileLogLevel = 'WARNING' # File logging level (e.g., INFO, WARNING, ERROR)
 areas = ["CM", "HW"] # List of areas for the /question command
-EAGLE_API_URL = 'https://api.domain.com' # URL of the Eagle API
 SHLINK_API_URL = 'https://shlink.domain.com' # URL of the Shlink API
 NAAS_API_URL = 'https://naas.domain.com' # URL of the NAAS API
 
@@ -25,7 +24,7 @@ Quiz = ['@it', '@sw', '@user123'] # Telegram usernames allowed to use quiz admin
 QRcodeGroups = ['-GroupID', '-GroupID'] # List of Telegram group IDs where QR code features are allowed
 
 [Features]
-EAgleAPIIntegration = false # Enable or disable integration with the Eagle API
+InLabIntegration = true # Enable or disable InLab integration (inlab and ore)
 DatabaseIntegration = false # Enable or disable Database integration (tags, mentions, inlab, quiz logging, whitelist)
 ODGCommand = false # Enable or disable the /odg command
 IDCommand = false # Enable or disable the /info command

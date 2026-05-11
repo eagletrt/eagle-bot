@@ -1,6 +1,6 @@
 import requests
 
-class EagleAPI:
+class InLabClient:
     """ Simple API client that keeps a persistent requests.Session. """
     def __init__(self, base_url: str,):
         """ Initialize the EagleAPI client with the given base URL. """

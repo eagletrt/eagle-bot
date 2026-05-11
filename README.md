@@ -26,7 +26,7 @@
 
 - **Agenda Management (ODG)**: Add, remove, view, and reset a shared task list for each chat or thread.
 - **Database Integration**: Retrieve information about members, areas, workgroups, and projects via PostgreSQL and Pony ORM.
-- **Interaction with E-Agle API**: Monitor who is present in the lab and view the monthly hours of each member.
+- **Interaction with InLab**: Monitor who is present in the lab and view the monthly hours of each member.
 - **Mention Notifications**: By mentioning a tag (e.g., `@sw`), the bot responds with the list of associated members, facilitating communication.
 - **Quiz Management**: Create and manage interactive quizzes for team training and engagement.
 - **QR Code Generation**: Create QR codes from any text or URL.
@@ -40,7 +40,7 @@ The bot is built on a modular architecture that separates responsibilities into 
 2.  **Command Handlers (`/commands`)**: Each file in this directory implements the logic for a specific command (e.g., `/odg`, `/inlab`). This approach keeps the code organized and easy to extend.
 3.  **Modules (`/modules`)**: Contains clients and wrappers for interacting with external services and the database.
     - `database.py`: Client for the team database (PostgreSQL).
-    - `api_client.py`: Client for E-Agle's internal APIs.
+    - `inlab.py`: Client for the InLab API.
     - `odg.py`: Manager for the ODG database (PostgreSQL with Pony ORM).
     - `quiz.py`: Logic for quiz management.
     - `scheduler.py`: For running scheduled tasks.
@@ -58,7 +58,7 @@ The bot is built on a modular architecture that separates responsibilities into 
 ├── data/             # Persistent data (logs, configuration)
 ├── modules/          # Reusable modules (API clients, DB)
 │   ├── database.py
-│   ├── api_client.py
+│   ├── inlab.py
 │   ├── odg.py
 │   └── ...
 ├── main.py           # Application entrypoint
@@ -72,7 +72,7 @@ The bot is built on a modular architecture that separates responsibilities into 
 
 - Python 3.9+
 - Docker and Docker Compose (for running in a container)
-- Access to team databases and E-Agle APIs
+- Access to team databases and APIs (e.g., PostgreSQL, Shlink, InLab)
 
 ## Installation and Startup
 
