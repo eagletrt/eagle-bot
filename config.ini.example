@@ -14,6 +14,10 @@ DB_PORT = '5432' # Database port
 DB_NAME = 'database' # Database name
 DB_QUIZ = 'quizdb' # Quiz database name
 
+[Database.bases]
+quizBase = 'qwertyuiop12345'
+hrBase = 'qwertyuiop12345'
+
 [Whitelist]
 General = ['@everyone'] # Telegram usernames allowed bot access
 cron = '*/30 * * * *' # Cron schedule for refreshing the whitelist (default: every 30 minutes)
@@ -46,26 +50,3 @@ GroupID = '-GroupID' # Telegram group ID for the Operations area
 Threads = ['3', '4'] # List of scheduled question thread IDs for the Operations area
 Scheduling = ['*/1 * * * *', '*/2 * * * *'] # List of cron scheduling strings for every thread in Threads
 area = ['CM', "MGT"] # List of area codes for the Operations area
-
-[Database.members]
-table = 'qwertyuiop12345'
-view = 'qwertyuiop12345'
-
-[Database.area]
-table = 'qwertyuiop12345'
-link = 'qwertyuiop12345'
-
-[Database.workgroup]
-table = 'qwertyuiop12345'
-link = 'qwertyuiop12345'
-
-[Database.project]
-table = 'qwertyuiop12345'
-link = 'qwertyuiop12345'
-
-[Database.role]
-table = 'qwertyuiop12345'
-link = 'qwertyuiop12345'
-
-[Database.quiz]
-table = 'qwertyuiop12345'
