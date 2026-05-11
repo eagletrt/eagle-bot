@@ -10,7 +10,7 @@ class Whitelist:
 
         self.whitelist: dict[str, list[str]] = {}
         self.tag_cache = application.bot_data['tag_cache']
-        self.nocodb = application.bot_data['nocodb']
+        self.database = application.bot_data['database']
         
         # run first cache update
         asyncio.create_task(self._update_cache())
@@ -44,7 +44,7 @@ class Whitelist:
 
         for tag_key, tag_type in tag_types.items():
             for tag in self.tag_cache.get(tag_key, []):
-                tasks.append(self.nocodb.members(tag.lstrip("@"), tag_type))
+                tasks.append(self.database.members(tag.lstrip("@"), tag_type))
                 tag_map.append(tag)
 
         results = await asyncio.gather(*tasks)

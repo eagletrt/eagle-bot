@@ -25,9 +25,9 @@ async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         logging.warning(f"commands/inlab - Unauthorized /inlab attempt by @{username}")
         return
 
-    # Load the EagleAPI and NocoDB clients from bot data
+    # Load the EagleAPI and Database clients from bot data
     eagle_api = context.bot_data["eagle_api"]
-    nocodb = context.bot_data["nocodb"]
+    database = context.bot_data["database"]
 
     # Send temporary message
     message = await update.message.reply_html("Dame n’atimo che i cato fora")
@@ -35,9 +35,9 @@ async def inlab(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Call EagleAPI client; expected structure: {'people': [emails], 'count': n}
     inlab_data = eagle_api.inlab()
 
-    # Convert emails to NocoDB usernames/tags using the nocodb helper
+    # Convert emails to Database usernames/tags using the database helper
     tags = await asyncio.gather(
-        *[nocodb.username_from_email(email) for email in inlab_data['people']]
+        *[database.username_from_email(email) for email in inlab_data['people']]
     )
 
     # Log the in-lab data for debugging

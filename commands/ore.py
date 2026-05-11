@@ -22,11 +22,11 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     
     # Extract services from bot_data
-    nocodb = context.bot_data["nocodb"]
+    database = context.bot_data["database"]
     eagle_api = context.bot_data["eagle_api"]
 
-    # Look up the user's email via NocoDB; this project stores mappings
-    team_email = await nocodb.email_from_username(username)
+    # Look up the user's email via Database; this project stores mappings
+    team_email = await database.email_from_username(username)
     if not team_email:
         logging.warning(f"commands/ore - No team email found for @{username}")
         await update.message.reply_html("Your Telegram username is not associated with a team email.")

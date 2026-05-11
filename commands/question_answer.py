@@ -33,12 +33,12 @@ async def question_answer(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     selected_option = answer.option_ids[0]
     correct_option = options['correct_option']
     
-    nocodb = context.bot_data['nocodb']
+    database = context.bot_data['database']
     if selected_option == correct_option:
         logging.info(f"commands/question - User @{user.username} answered correctly for question {options['question_id']}-{options['quiz_id']} | ({options['areas']})")
-        await nocodb.quiz_answer_log(user.username, True)
+        await database.quiz_answer_log(user.username, True)
     else:
         logging.info(f"commands/question - User @{user.username} answered incorrectly for question {options['question_id']}-{options['quiz_id']} | ({options['areas']})")
-        await nocodb.quiz_answer_log(user.username, False)
+        await database.quiz_answer_log(user.username, False)
 
     return

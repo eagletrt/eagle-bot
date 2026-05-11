@@ -34,8 +34,8 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         logging.warning(f"commands/mentions - Unauthorized /mentions attempt by @{username}")
         return
 
-    # Load NocoDB and tag cache from bot data
-    nocodb = context.bot_data["nocodb"]
+    # Load Database and tag cache from bot data
+    database = context.bot_data["database"]
     tag_cache = context.bot_data["tag_cache"]
     whitelist = context.bot_data["whitelist"]
 
@@ -62,9 +62,9 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             # Call EagleAPI client; expected structure: {'people': [emails], 'count': n}
             inlab_data = eagle_api.inlab()
 
-            # Convert emails to NocoDB usernames/tags using the nocodb helper
+            # Convert emails to Database usernames/tags using the database helper
             tags = await asyncio.gather(*[
-                nocodb.username_from_email(email)
+                database.username_from_email(email)
                 for email in inlab_data['people']
             ])
 

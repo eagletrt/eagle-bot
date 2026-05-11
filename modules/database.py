@@ -8,7 +8,7 @@ with open(os.getenv("CONFIG_PATH"), "rb") as f:
     try:
         config = tomllib.load(f)
     except tomllib.TOMLDecodeError as e:
-        logging.error(f"modules/nocodb - Error parsing data/config.ini: {e}")
+        logging.error(f"modules/database - Error parsing data/config.ini: {e}")
         exit(1)
 
 class DatabaseClient:
