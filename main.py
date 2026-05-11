@@ -22,7 +22,6 @@ from commands.quizzes import quizzes
 from commands.event import event
 from commands.events import events
 from commands.question import question
-from commands.question_answer import question_answer
 from commands.answer import answer
 from commands.id import id
 from commands.no import no
