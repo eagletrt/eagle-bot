@@ -41,7 +41,7 @@ class InLabClient:
 
                 query = """
                     SELECT "entrata", "uscita" FROM "presenzalab"
-                    WHERE "email" = %s AND "entrata" >= %s AND "uscita" IS NOT NULL
+                    WHERE "email" = %s AND "entrata" >= %s
                     ORDER BY "entrata" DESC
                 """
 
@@ -52,7 +52,7 @@ class InLabClient:
                     logging.warning(f"modules/inlab - No ore data found for user {email}")
                     return 0.0
                 
-                result = sum([(row[1] - row[0]).total_seconds() / 3600 for row in rows])
+                result = sum([((row[1] or datetime.now()) - row[0]).total_seconds() / 3600 for row in rows])
                 logging.info(f"modules/inlab - Retrieved ore data for user {email}: {result}")
                 return result
         except Exception as e:
