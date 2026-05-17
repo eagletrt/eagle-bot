@@ -167,7 +167,7 @@ def main() -> None:
         .build()
     )
 
-    logging.info("main/main - T.E.C.S. started")
+    logging.info("main/main - TECS started")
 
     # Store config in bot_data for global access
     application.bot_data["config"] = config
@@ -233,4 +233,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-    logging.info("main/main - T.E.C.S. ended")
+    logging.info("main/main - TECS ended")

@@ -30,6 +30,7 @@ DatabaseIntegration = false # Enable or disable Database integration (tags, ment
 ODGCommand = false # Enable or disable the /odg command
 IDCommand = false # Enable or disable the /info command
 MentionHandler = false # Enable or disable the mention handler (/tags command && mention responses)
+Whitelist = true # Enable or disable the whitelist feature (!!WARN: requires DatabaseIntegration and MentionHandler, if disabled all users are allowed)
 QRcodeGenerator = false # Enable or disable the QR code generator feature
 FSQuiz = false # Enable or disable the quiz feature
 FSQuizScheduledSends = false # Enable or disable scheduled quiz sends

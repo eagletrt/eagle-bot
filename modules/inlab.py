@@ -41,7 +41,7 @@ class InLabClient:
 
                 query = """
                     SELECT "entrata", "uscita" FROM "presenzalab"
-                    WHERE "email" = %s AND "entrata" >= %s
+                    WHERE "email" = %s AND "entrata" >= %s AND "isvalid" = TRUE
                     ORDER BY "entrata" DESC
                 """
 

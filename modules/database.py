@@ -38,17 +38,19 @@ class DatabaseClient:
                 if kind == "Area":
                     query = f"""
                         SELECT "Tag" FROM {self.dbconf['bases']['hrBase']}."Areas"
+                        WHERE "__nc_deleted" IS NULL
                         ORDER BY "Tag"
                     """
                 elif kind == "Workgroup" or kind == "Project":
                     query = f"""
                         SELECT "Tag" FROM {self.dbconf['bases']['hrBase']}."Projects"
-                        WHERE "Type" = '{kind}'
+                        WHERE "Type" = '{kind}' AND "__nc_deleted" IS NULL
                         ORDER BY "Tag"
                     """
                 elif kind == "Role":
                     query = f"""
                         SELECT "Tag" FROM {self.dbconf['bases']['hrBase']}."Roles"
+                        WHERE "__nc_deleted" IS NULL
                         ORDER BY "Tag"
                     """
                 else:
@@ -83,7 +85,7 @@ class DatabaseClient:
                         SELECT p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
                         JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Areas" m ON p."id" = m."People_id"
                         JOIN {self.dbconf['bases']['hrBase']}."Areas" a ON m."Areas_id" = a."id"
-                        WHERE a."Tag" ILIKE %s AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable')
+                        WHERE a."Tag" ILIKE %s AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable') AND a."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
                         ORDER BY p."Telegram_Username"
                     """
                 elif kind == "Workgroup" or kind == "Project":
@@ -91,7 +93,7 @@ class DatabaseClient:
                         SELECT p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
                         JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Projects" m ON p."id" = m."People_id"
                         JOIN {self.dbconf['bases']['hrBase']}."Projects" pr ON m."Projects_id" = pr."id"
-                        WHERE pr."Tag" ILIKE %s AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable')
+                        WHERE pr."Tag" ILIKE %s AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable') AND pr."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
                         ORDER BY p."Telegram_Username"
                     """
                 elif kind == "Role":
@@ -99,7 +101,7 @@ class DatabaseClient:
                         SELECT p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
                         JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Roles" m ON p."id" = m."People_id"
                         JOIN {self.dbconf['bases']['hrBase']}."Roles" r ON m."Roles_id" = r."id"
-                        WHERE r."Tag" ILIKE %s AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable')
+                        WHERE r."Tag" ILIKE %s AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable') AND r."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
                         ORDER BY p."Telegram_Username"
                     """
 
@@ -126,7 +128,7 @@ class DatabaseClient:
             with conn.cursor() as cursor:
                 query = f"""
                     SELECT "University_Email" FROM {self.dbconf['bases']['hrBase']}."People"
-                    WHERE "Telegram_Username" ILIKE %s
+                    WHERE "Telegram_Username" ILIKE %s AND "__nc_deleted" IS NULL
                     LIMIT 1
                 """
                 cursor.execute(query, (f"@{username}",))
@@ -152,7 +154,7 @@ class DatabaseClient:
             with conn.cursor() as cursor:
                 query = f"""
                     SELECT "Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People"
-                    WHERE "University_Email" = %s
+                    WHERE "University_Email" = %s AND "__nc_deleted" IS NULL
                     LIMIT 1
                 """
 
