@@ -1,7 +1,7 @@
 import os
 import logging
 import psycopg2
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class InLabClient:
     """ Client for interacting with the inlab database. """
@@ -57,6 +57,93 @@ class InLabClient:
                 return result
         except Exception as e:
             logging.error(f"modules/inlab - Error fetching ore data for user {email}: {e}")
+            raise
+        finally:
+            conn.close()
+
+    def oreLabWeek(self, email: str) -> dict:
+        """Call the ore lab week endpoint for a given email.
+
+        Returns a dict with hours summed per weekday (Monday..Sunday).
+        """
+
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cursor:
+
+                now = datetime.now()
+                week_start = (now - timedelta(days=now.weekday())).strftime("%Y-%m-%d")
+
+                query = """
+                    SELECT "entrata", "uscita" FROM "presenzalab"
+                    WHERE "email" = %s AND "entrata" >= %s AND "isvalid" = TRUE
+                    ORDER BY "entrata" DESC
+                """
+
+                cursor.execute(query, (email, week_start))
+                rows = cursor.fetchall()
+                
+                if not rows:
+                    logging.warning(f"modules/inlab - No ore data found for user {email} this week")
+                    return {}
+
+                # Initialize weekdays Monday(0) .. Sunday(6)
+                weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                per_day = {d: 0.0 for d in weekdays}
+
+                for entrata, uscita in rows:
+                    end = uscita or datetime.now()
+                    hours = (end - entrata).total_seconds() / 3600
+                    day = entrata.weekday()
+                    per_day[weekdays[day]] += hours
+
+                logging.info(f"modules/inlab - Retrieved ore per-day data for user {email} this week: {per_day}")
+                return per_day
+        except Exception as e:
+            logging.error(f"modules/inlab - Error fetching ore data for user {email} this week: {e}")
+            raise
+        finally:
+            conn.close()
+
+    def oreLabMonth(self, email: str) -> dict:
+        """Call the ore lab month endpoint for a given email.
+
+        Returns a dict with hours summed per day of the month (1..31).
+        """
+        
+        conn = self._get_connection()
+        try:
+            with conn.cursor() as cursor:
+
+                now = datetime.now()
+                month_start = now.replace(day=1).strftime("%Y-%m-%d")
+
+                query = """
+                    SELECT "entrata", "uscita" FROM "presenzalab"
+                    WHERE "email" = %s AND "entrata" >= %s AND "isvalid" = TRUE
+                    ORDER BY "entrata" DESC
+                """
+
+                cursor.execute(query, (email, month_start))
+                rows = cursor.fetchall()
+                
+                if not rows:
+                    logging.warning(f"modules/inlab - No ore data found for user {email} this month")
+                    return {}
+
+                # Initialize days of the month (1..31)
+                per_day = {d: 0.0 for d in range(1, 32)}
+
+                for entrata, uscita in rows:
+                    end = uscita or datetime.now()
+                    hours = (end - entrata).total_seconds() / 3600
+                    day = entrata.day
+                    per_day[day] += hours
+
+                logging.info(f"modules/inlab - Retrieved ore per-day data for user {email} this month: {per_day}")
+                return per_day
+        except Exception as e:
+            logging.error(f"modules/inlab - Error fetching ore data for user {email} this month: {e}")
             raise
         finally:
             conn.close()
