@@ -162,23 +162,23 @@ This file is divided into sections:
 
 ### Available Commands
 
-| Command     | Description                                             | Example                                                                |
-| ----------- | ------------------------------------------------------- | -----------------------------------------------------------------------|
-| `/start`    | Shows a welcome message.                                | `/start`                                                               |
-| `/odg`      | Manages the Agenda (ODG).                               | `/odg`, `/odg <task>`, `/odg remove <id>`, `/odg reset`                |
-| `/shop`     | Shows available shop items.                             | `/shop`, `/shop <item>`, `/shop remove <id>`, `/shop reset`            |
-| `/tags`     | Shows available tags (areas, projects, etc.).           | `/tags`                                                                |
-| `/inlab`    | Shows who is currently in the lab.                      | `/inlab`                                                               |
-| `/ore`      | Shows the monthly hours for each member.                | `/ore`                                                                 |
-| `/quiz`     | Starts or manages a quiz.                               | `/quiz <id>`                                                           |
-| `/quizzes`  | Lists all available quizzes.                            | `/quizzes`                                                             |
-| `/question` | Sends a random question from a specific area.           | `/question <area>`                                                     |
-| `/answer`   | Allows answering an open-ended question.                | `/answer <text>`                                                       |
-| `/qr`       | Generates a QR code from the provided text.             | `/qr https://example.com`                                              |
-| `/events`   | Shows upcoming events.                                  | `/events`                                                              |
-| `/id`       | Shows the current chat ID and your user ID.             | `/id`                                                                  |
-| `/no`       | Shows a random excuse from the naas API.                | `/no`                                                                  |
-| `/eduardo`  | Sends an animation of Eduardo.                          | `/eduardo`                                                             |
+| Command     | Description                                             | Example                                                                                |
+| ----------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------|
+| `/start`    | Shows a welcome message.                                | `/start`                                                                               |
+| `/odg`      | Manages the Agenda (ODG).                               | `/odg`, `/odg <task>`, `/odg remove <id>`, `/odg reset`                                |
+| `/shop`     | Shows available shop items.                             | `/shop`, `/shop <item>`, `/shop remove <id>`, `/shop reset`                            |
+| `/tags`     | Shows available tags (areas, projects, etc.).           | `/tags`                                                                                |
+| `/inlab`    | Shows who is currently in the lab.                      | `/inlab`                                                                               |
+| `/ore`      | Shows the monthly hours for each member.                | `/ore`, `/ore week`, `/ore month`, `/ore year`, `/ore season`, `/ore total`            |
+| `/quiz`     | Starts or manages a quiz.                               | `/quiz <id>`                                                                           |
+| `/quizzes`  | Lists all available quizzes.                            | `/quizzes`                                                                             |
+| `/question` | Sends a random question from a specific area.           | `/question <area>`                                                                     |
+| `/answer`   | Allows answering an open-ended question.                | `/answer <text>`                                                                       |
+| `/qr`       | Generates a QR code from the provided text.             | `/qr https://example.com`                                                              |
+| `/events`   | Shows upcoming events.                                  | `/events`                                                                              |
+| `/id`       | Shows the current chat ID and your user ID.             | `/id`                                                                                  |
+| `/no`       | Shows a random excuse from the naas API.                | `/no`                                                                                  |
+| `/eduardo`  | Sends an animation of Eduardo.                          | `/eduardo`                                                                             |
 
 ### Mentions
 
