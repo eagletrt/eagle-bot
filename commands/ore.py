@@ -95,14 +95,70 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_html(response)
 
     elif text.lower().startswith("/ore year"):
-        #..
-        return
+        try:
+            ore_data = inlabClient.oreLabYear(team_email)
+        except Exception:
+            logging.exception(f"commands/ore - Failed to retrieve yearly lab hours for @{username}")
+            await update.message.reply_html("Unable to retrieve your yearly lab hours right now.")
+            return
+        
+        if not isinstance(ore_data, dict):
+            logging.warning(f"commands/ore - Invalid ore data format for @{username} yearly: {ore_data}")
+            ore_data = {}
+
+        response_lines = ["This year you've spent:"]
+        for month in ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]:
+            hours = ore_data.get(month, 0)
+            if hours > 0:
+                response_lines.append(f"<b>{month}:</b> {pretty_time(hours)}")
+        response = "\n".join(response_lines)
+
+        if len(response_lines) == 1:
+            response = "You haven't spent any time in the lab this year."
+
+        logging.info(f"commands/ore - Yearly lab hours for @{username}: {response}")
+        await update.message.reply_html(response)
+
     elif text.lower().startswith("/ore season"):
-        #..
-        return
+        try:
+            ore_data = inlabClient.oreLabSeason(team_email)
+        except Exception:
+            logging.exception(f"commands/ore - Failed to retrieve seasonal lab hours for @{username}")
+            await update.message.reply_html("Unable to retrieve your seasonal lab hours right now.")
+            return
+
+        if not isinstance(ore_data, dict):
+            logging.warning(f"commands/ore - Invalid ore data format for @{username} seasonal: {ore_data}")
+            ore_data = {}
+
+        response_lines = ["This season you've spent:"]
+        for season, hours in ore_data.items():
+            if hours > 0:
+                response_lines.append(f"<b>{season}:</b> {pretty_time(hours)}")
+        response = "\n".join(response_lines)
+
+        if len(response_lines) == 1:
+            response = "You haven't spent any time in the lab this season."
+
+        logging.info(f"commands/ore - Seasonal lab hours for @{username}: {response}")
+        await update.message.reply_html(response)
     elif text.lower().startswith("/ore total"):
-        #..
-        return
+        try:
+            ore_data = inlabClient.oreLabTotal(team_email)
+        except Exception:
+            logging.exception(f"commands/ore - Failed to retrieve total lab hours for @{username}")
+            await update.message.reply_html("Unable to retrieve your total lab hours right now.")
+            return
+        
+        if not isinstance(ore_data, (int, float)):
+            logging.warning(f"commands/ore - Invalid ore data format for @{username} total: {ore_data}")
+            ore_data = 0
+
+        ore_str = pretty_time(ore_data)
+        response = f"You've spent a total of <b>{ore_str}</b> in the lab!"
+        logging.info(f"commands/ore - Total lab hours for @{username}: {response}")
+        await update.message.reply_html(response)
+
     else:
         try:
             ore_data = inlabClient.oreLab(team_email)
