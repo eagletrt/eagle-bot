@@ -215,7 +215,7 @@ class InLabClient:
                     logging.warning(f"modules/inlab - No ore data found for user {email} this season")
                     return {}
 
-                seasons = ['Fenice | 2021-2022', 'Fenice EVO | 2022-2023', 'Hydra | 2023-2024', 'Kraken | 2024-2025', 'Kraken | 2025-2026']
+                seasons = ['Fenice EVO | 2022-2023', 'Hydra | 2023-2024', 'Kraken | 2024-2025', 'Kraken | 2025-2026']
 
                 per_season = {s: 0.0 for s in seasons}
                 for entrata, uscita in rows:
@@ -229,9 +229,7 @@ class InLabClient:
                     else:
                         season_key = f"{year - 1}-{year}"
 
-                    if season_key == "2021-2022":
-                        per_season['Fenice | 2021-2022'] += hours
-                    elif season_key == "2022-2023":
+                    if season_key == "2022-2023":
                         per_season['Fenice EVO | 2022-2023'] += hours
                     elif season_key == "2023-2024":
                         per_season['Hydra | 2023-2024'] += hours
