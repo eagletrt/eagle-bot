@@ -42,8 +42,6 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         m = int((hours - h) * 60)
         return f"{h}h {m}m"
     
-    team_email = 'filippo.pesavento@eagletrt.it' # --- FOR TESTING ONLY, IGNORE ---
-    
     if text.lower().startswith("/ore week"):
         try:
             ore_data = inlabClient.oreLabWeek(team_email)
@@ -138,7 +136,7 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         response = "\n".join(response_lines)
 
         if len(response_lines) == 1:
-            response = "You haven't spent any time in the lab this season."
+            response = "You haven't spent any time in the lab in any season. Seriously, how did you even manage that?"
 
         logging.info(f"commands/ore - Seasonal lab hours for @{username}: {response}")
         await update.message.reply_html(response)
