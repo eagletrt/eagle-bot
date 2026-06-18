@@ -28,6 +28,7 @@ QRcodeGroups = ['-GroupID', '-GroupID'] # List of Telegram group IDs where QR co
 InLabIntegration = true # Enable or disable InLab integration (inlab and ore)
 DatabaseIntegration = false # Enable or disable Database integration (tags, mentions, inlab, quiz logging, whitelist)
 ODGCommand = false # Enable or disable the /odg command
+ShopCommand = false # Enable or disable the /shop command
 IDCommand = false # Enable or disable the /info command
 MentionHandler = false # Enable or disable the mention handler (/tags command && mention responses)
 Whitelist = true # Enable or disable the whitelist feature (!!WARN: requires DatabaseIntegration and MentionHandler, if disabled all users are allowed)

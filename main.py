@@ -12,6 +12,7 @@ from modules.scheduler import setup_scheduler
 # Import command handlers
 from commands.start import start
 from commands.odg import odg
+from commands.shop import shop
 from commands.inlab import inlab
 from commands.ore import ore
 from commands.tags import tags
@@ -91,6 +92,10 @@ async def ps(application: Application) -> None:
     if application.bot_data["config"]['Features']['ODGCommand']:
         commands.append(BotCommand("odg", "Show ODG"))
 
+    # Conditional addition of Shop command
+    if application.bot_data["config"]['Features']['ShopCommand']:
+        commands.append(BotCommand("shop", "Show shop items"))
+
     # Conditional addition of InLab commands
     if application.bot_data["config"]['Features']['InLabIntegration'] and application.bot_data["config"]['Features']['DatabaseIntegration']:
         commands.extend([
@@ -126,7 +131,7 @@ def main() -> None:
         if "SHLINK_API_KEY" in missing_vars and config['Features']['QRcodeGenerator']:
             logging.error("main/main - SHLINK_API_KEY environment variable is required but not set.")
             exit(1)
-        if "DB_PASSWORD" in missing_vars and (config['Features']['ODGCommand'] or config['Features']['FSQuiz'] or config['Features']['DatabaseIntegration']):
+        if "DB_PASSWORD" in missing_vars and (config['Features']['ODGCommand'] or config['Features']['FSQuiz'] or config['Features']['DatabaseIntegration'] or config['Features']['InLabIntegration'] or config['Features']['MentionHandler'] or config['Features']['Whitelist'] or config['Features']['ShopCommand']):
             logging.error("main/main - DB_PASSWORD environment variable is required but not set.")
             exit(1)
 
@@ -201,6 +206,11 @@ def main() -> None:
     if config['Features']['ODGCommand']:
         application.add_handler(CommandHandler("odg", odg))
         logging.info("main/main - ODG command enabled and handler registered.")
+
+    # Conditional registration of Shop command
+    if config['Features']['ShopCommand']:
+        application.add_handler(CommandHandler("shop", shop))
+        logging.info("main/main - Shop command enabled and handler registered.")
 
     # Conditional registration of InLab handlers
     if config['Features']['InLabIntegration'] and config['Features']['DatabaseIntegration']:

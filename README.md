@@ -44,6 +44,9 @@ The bot is built on a modular architecture that separates responsibilities into 
     - `odg.py`: Manager for the ODG database (PostgreSQL with Pony ORM).
     - `quiz.py`: Logic for quiz management.
     - `scheduler.py`: For running scheduled tasks.
+    - `shlink.py`: Client for the Shlink API (QR code generation).
+    - `shop.py`: Logic for managing the shop feature.
+    - `whitelist.py`: Logic for managing the whitelist feature.
 4.  **Persistent Data (`/data`)**: A directory mounted as a Docker volume to store the log files, and configuration.
 5.  **Configuration (`config.ini`)**: A central configuration file that allows enabling or disabling features (feature flags) and customizing bot settings without modifying the code.
 
@@ -159,22 +162,23 @@ This file is divided into sections:
 
 ### Available Commands
 
-| Command     | Description                                             | Example                             |
-| ----------- | ------------------------------------------------------- | ----------------------------------- |
-| `/start`    | Shows a welcome message.                                | `/start`                            |
-| `/odg`      | Manages the Agenda (ODG).                               | `/odg`, `/odg <task>`, `/odg reset` |
-| `/tags`     | Shows available tags (areas, projects, etc.).           | `/tags`                             |
-| `/inlab`    | Shows who is currently in the lab.                      | `/inlab`                            |
-| `/ore`      | Shows the monthly hours for each member.                | `/ore`                              |
-| `/quiz`     | Starts or manages a quiz.                               | `/quiz <id>`                        |
-| `/quizzes`  | Lists all available quizzes.                            | `/quizzes`                          |
-| `/question` | Sends a random question from a specific area.           | `/question <area>`                  |
-| `/answer`   | Allows answering an open-ended question.                | `/answer <text>`                    |
-| `/qr`       | Generates a QR code from the provided text.             | `/qr https://example.com`           |
-| `/events`   | Shows upcoming events.                                  | `/events`                           |
-| `/id`       | Shows the current chat ID and your user ID.             | `/id`                               |
-| `/no`       | Shows a random excuse from the naas API.                | `/no`                               |
-| `/eduardo`  | Sends an animation of Eduardo.                          | `/eduardo`                          |
+| Command     | Description                                             | Example                                                                                |
+| ----------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------|
+| `/start`    | Shows a welcome message.                                | `/start`                                                                               |
+| `/odg`      | Manages the Agenda (ODG).                               | `/odg`, `/odg <task>`, `/odg remove <id>`, `/odg reset`                                |
+| `/shop`     | Manage shop items (view/add/remove/reset).              | `/shop`, `/shop <item>`, `/shop add <item>`, `/shop remove <id>`, `/shop reset`        |
+| `/tags`     | Shows available tags (areas, projects, etc.).           | `/tags`                                                                                |
+| `/inlab`    | Shows who is currently in the lab.                      | `/inlab`                                                                               |
+| `/ore`      | Shows the invoking user's hours. Supports week/month/year/season/total. | `/ore`, `/ore week`, `/ore month`, `/ore year`, `/ore season`, `/ore total`            |
+| `/quiz`     | Starts or manages a quiz.                               | `/quiz <id>`                                                                           |
+| `/quizzes`  | Lists all available quizzes.                            | `/quizzes`                                                                             |
+| `/question` | Sends a random question from a specific area.           | `/question <area>`                                                                     |
+| `/answer`   | Allows answering an open-ended question.                | `/answer <text>`                                                                       |
+| `/qr`       | Generates a QR code from the provided text.             | `/qr https://example.com`                                                              |
+| `/events`   | Shows upcoming events.                                  | `/events`                                                                              |
+| `/id`       | Shows the current chat ID and your user ID.             | `/id`                                                                                  |
+| `/no`       | Shows a random excuse from the naas API.                | `/no`                                                                                  |
+| `/eduardo`  | Sends an animation of Eduardo.                          | `/eduardo`                                                                             |
 
 ### Mentions
 
@@ -197,5 +201,5 @@ The logging system is configurable via the `config.ini` file:
 
 ### Database
 
-- The bot uses an **PostgreSQL** database for persisting data related to the agenda and quizzes.
+- The bot uses a **PostgreSQL** database for persisting data related to the agenda, shop, and quizzes.
 - Interaction with the database is handled via **Pony ORM**, which abstracts SQL queries and simplifies entity management.
