@@ -166,10 +166,10 @@ This file is divided into sections:
 | ----------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------|
 | `/start`    | Shows a welcome message.                                | `/start`                                                                               |
 | `/odg`      | Manages the Agenda (ODG).                               | `/odg`, `/odg <task>`, `/odg remove <id>`, `/odg reset`                                |
-| `/shop`     | Shows available shop items.                             | `/shop`, `/shop <item>`, `/shop remove <id>`, `/shop reset`                            |
+| `/shop`     | Manage shop items (view/add/remove/reset).              | `/shop`, `/shop <item>`, `/shop add <item>`, `/shop remove <id>`, `/shop reset`        |
 | `/tags`     | Shows available tags (areas, projects, etc.).           | `/tags`                                                                                |
 | `/inlab`    | Shows who is currently in the lab.                      | `/inlab`                                                                               |
-| `/ore`      | Shows the monthly hours for each member.                | `/ore`, `/ore week`, `/ore month`, `/ore year`, `/ore season`, `/ore total`            |
+| `/ore`      | Shows the invoking user's hours. Supports week/month/year/season/total. | `/ore`, `/ore week`, `/ore month`, `/ore year`, `/ore season`, `/ore total`            |
 | `/quiz`     | Starts or manages a quiz.                               | `/quiz <id>`                                                                           |
 | `/quizzes`  | Lists all available quizzes.                            | `/quizzes`                                                                             |
 | `/question` | Sends a random question from a specific area.           | `/question <area>`                                                                     |
@@ -201,5 +201,5 @@ The logging system is configurable via the `config.ini` file:
 
 ### Database
 
-- The bot uses an **PostgreSQL** database for persisting data related to the agenda, shop, and quizzes.
+- The bot uses a **PostgreSQL** database for persisting data related to the agenda, shop, and quizzes.
 - Interaction with the database is handled via **Pony ORM**, which abstracts SQL queries and simplifies entity management.
