@@ -47,6 +47,7 @@ The bot is built on a modular architecture that separates responsibilities into 
     - `shlink.py`: Client for the Shlink API (QR code generation).
     - `shop.py`: Logic for managing the shop feature.
     - `whitelist.py`: Logic for managing the whitelist feature.
+    - `logger.py`: Configures logging to console and file with colored output, and error handling.
 4.  **Persistent Data (`/data`)**: A directory mounted as a Docker volume to store the log files, and configuration.
 5.  **Configuration (`config.ini`)**: A central configuration file that allows enabling or disabling features (feature flags) and customizing bot settings without modifying the code.
 
