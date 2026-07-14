@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Callable
 from modules.database import DatabaseClient
 from modules.inlab import InLabClient
+from modules.logger import configure_bootstrap_logging, configure_logging
 from modules.shlink import ShlinkAPI
 from modules.whitelist import Whitelist
 from telegram import Update, BotCommand
@@ -151,37 +152,8 @@ def initialize_runtime_services(application: Application, config: dict) -> None:
         application.bot_data["areas"] = config["Settings"]["areas"]
         logging.info("main/main - Quiz feature enabled.")
 
-# Color codes used for coloring log output in console only
-COLORS = {
-    "INFO": "\033[94m",
-    "WARNING": "\033[33m",
-    "ERROR": "\033[91m",
-    "RESET": "\033[0m"
-}
 
-class ColorFormatter(logging.Formatter):
-    """Custom logging formatter to add colors based on log level."""
-
-    def format(self, record):
-        """Format log messages with colors based on severity level."""
-
-        message = super().format(record)
-        levelname = record.levelname
-        color = COLORS.get(levelname, COLORS["RESET"])
-        start = message.find(f"[{levelname}]")
-        if start != -1:
-            end = start + len(f"[{levelname}]")
-            message = (
-                message[:start]
-                + f"{color}[{levelname}]{COLORS['RESET']}"
-                + message[end:]
-            )
-        return message
-
-# Configure logging to console with colors
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(ColorFormatter("%(asctime)s [%(levelname)s] %(message)s"))
-logging.basicConfig(level=logging.INFO, handlers=[console_handler])
+configure_bootstrap_logging()
 
 async def ps(application: Application) -> None:
     """Post-initialization hook to set bot commands and start scheduler if enabled."""
@@ -220,25 +192,7 @@ def main() -> None:
     config = load_config(config_path)
     validate_environment(config)
 
-    # Configure logging from config file
-    log_level_console = config["Settings"]["ConsoleLogLevel"]
-    log_level_file = config["Settings"]["FileLogLevel"]
-    log_file_path = config["Paths"]["LogFilePath"]
-
-    # Get the root logger and set its level
-    root_logger = logging.getLogger()
-    root_logger.setLevel(getattr(logging, log_level_console))
-
-    # Add file handler
-    file_handler = logging.FileHandler(log_file_path, mode="a", encoding="utf-8")
-    file_handler.setLevel(getattr(logging, log_level_file))
-    file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
-    root_logger.addHandler(file_handler)
-
-    # Remove verbose logs (PTB)
-    logging.getLogger("httpx").setLevel(logging.WARNING)
-    logging.getLogger("telegram").setLevel(logging.WARNING)
-    logging.getLogger("apscheduler").setLevel(logging.WARNING)
+    configure_logging(config)
 
     application = (
         Application.builder()
