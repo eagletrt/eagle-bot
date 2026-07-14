@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Callable
 from modules.database import DatabaseClient
 from modules.inlab import InLabClient
-from modules.logger import configure_bootstrap_logging, configure_logging
+from modules.logger import configure_bootstrap_logging, configure_logging, configure_logger_reporting
 from modules.shlink import ShlinkAPI
 from modules.whitelist import Whitelist
 from telegram import Update, BotCommand
@@ -152,6 +152,9 @@ def initialize_runtime_services(application: Application, config: dict) -> None:
         application.bot_data["areas"] = config["Settings"]["areas"]
         logging.info("main/main - Quiz feature enabled.")
 
+    if config["Features"]["Logger"]:
+        configure_logger_reporting(config, application)
+        logging.info("main/main - Logger reporting feature enabled.")
 
 configure_bootstrap_logging()
 
