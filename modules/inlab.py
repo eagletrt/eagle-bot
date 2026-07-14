@@ -259,7 +259,6 @@ class InLabClient:
                 query = """
                     SELECT SUM("uscita" - "entrata") FROM "presenzalab"
                     WHERE "email" = %s AND "isvalid" = TRUE
-                    ORDER BY "entrata" DESC
                 """
 
                 cursor.execute(query, (email,))
