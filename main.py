@@ -1,12 +1,16 @@
 import os
 import logging
+import sys
 import tomllib
+from dataclasses import dataclass
+from typing import Callable
 from modules.database import DatabaseClient
 from modules.inlab import InLabClient
+from modules.logger import configure_bootstrap_logging, configure_logging, configure_logger_reporting
 from modules.shlink import ShlinkAPI
 from modules.whitelist import Whitelist
 from telegram import Update, BotCommand
-from telegram.ext import Application, CommandHandler, MessageHandler, PollAnswerHandler, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from modules.scheduler import setup_scheduler
 
 # Import command handlers
@@ -28,37 +32,131 @@ from commands.id import id
 from commands.no import no
 from commands.eduardo import eduardo
 
-# Color codes used for coloring log output in console only
-COLORS = {
-    "INFO": "\033[94m",
-    "WARNING": "\033[33m",
-    "ERROR": "\033[91m",
-    "RESET": "\033[0m"
-}
 
-class ColorFormatter(logging.Formatter):
-    """Custom logging formatter to add colors based on log level."""
+@dataclass(frozen=True)
+class CommandSpec:
+    """Describes a slash command and when it should be enabled."""
 
-    def format(self, record):
-        """Format log messages with colors based on severity level."""
+    name: str
+    description: str
+    handler: Callable
+    enabled: Callable[[dict], bool]
 
-        message = super().format(record)
-        levelname = record.levelname
-        color = COLORS.get(levelname, COLORS["RESET"])
-        start = message.find(f"[{levelname}]")
-        if start != -1:
-            end = start + len(f"[{levelname}]")
-            message = (
-                message[:start]
-                + f"{color}[{levelname}]{COLORS['RESET']}"
-                + message[end:]
-            )
-        return message
 
-# Configure logging to console with colors
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(ColorFormatter("%(asctime)s [%(levelname)s] %(message)s"))
-logging.basicConfig(level=logging.INFO, handlers=[console_handler])
+COMMAND_SPECS = [
+    CommandSpec("start", "Show a welcome message", start, lambda config: True),
+    CommandSpec("no", "Show a random excuse", no, lambda config: config["Features"]["Memes"]),
+    CommandSpec("eduardo", "Send an animation of Eduardo", eduardo, lambda config: config["Features"]["Memes"]),
+    CommandSpec(
+        "tags",
+        "List available tags",
+        tags,
+        lambda config: config["Features"]["MentionHandler"] and config["Features"]["DatabaseIntegration"] and config["Features"]["Whitelist"],
+    ),
+    CommandSpec("id", "Show the current chat ID and your user ID", id, lambda config: config["Features"]["IDCommand"]),
+    CommandSpec("odg", "Show ODG", odg, lambda config: config["Features"]["ODGCommand"]),
+    CommandSpec("shop", "Show shop items", shop, lambda config: config["Features"]["ShopCommand"]),
+    CommandSpec(
+        "inlab",
+        "People currently in lab",
+        inlab,
+        lambda config: config["Features"]["InLabIntegration"] and config["Features"]["DatabaseIntegration"],
+    ),
+    CommandSpec(
+        "ore",
+        "Your month's lab hours",
+        ore,
+        lambda config: config["Features"]["InLabIntegration"] and config["Features"]["DatabaseIntegration"],
+    ),
+    CommandSpec("qr", "Generate a shlink QR code", qr, lambda config: config["Features"]["QRcodeGenerator"]),
+    CommandSpec("question", "Get a random question", question, lambda config: config["Features"]["FSQuiz"]),
+    CommandSpec("quiz", "Fetch details for a quiz", quiz, lambda config: config["Features"]["FSQuiz"]),
+    CommandSpec("quizzes", "List available quizzes", quizzes, lambda config: config["Features"]["FSQuiz"]),
+    CommandSpec("event", "Show a random event", event, lambda config: config["Features"]["FSQuiz"]),
+    CommandSpec("events", "Show upcoming events", events, lambda config: config["Features"]["FSQuiz"]),
+    CommandSpec("answer", "Answer an open-ended question", answer, lambda config: config["Features"]["FSQuiz"]),
+]
+
+
+def load_config(config_path: str) -> dict:
+    """Load the TOML configuration file."""
+
+    try:
+        with open(config_path, "rb") as config_file:
+            return tomllib.load(config_file)
+    except FileNotFoundError:
+        logging.error("main/main - CONFIG_PATH points to a file that does not exist: %s", config_path)
+        sys.exit(1)
+    except tomllib.TOMLDecodeError as error:
+        logging.error("main/main - Error parsing config file %s: %s", config_path, error)
+        sys.exit(1)
+
+
+def validate_environment(config: dict) -> None:
+    """Validate environment variables required by the enabled features."""
+
+    if not os.getenv("TELEGRAM_BOT_TOKEN"):
+        logging.error("main/main - TELEGRAM_BOT_TOKEN environment variable is required but not set.")
+        sys.exit(1)
+
+    if config["Features"]["QRcodeGenerator"] and not os.getenv("SHLINK_API_KEY"):
+        logging.error("main/main - SHLINK_API_KEY environment variable is required but not set.")
+        sys.exit(1)
+
+    db_features_enabled = any(
+        config["Features"][feature]
+        for feature in ["ODGCommand", "FSQuiz", "DatabaseIntegration", "InLabIntegration", "MentionHandler", "Whitelist", "ShopCommand"]
+    )
+    if db_features_enabled and not os.getenv("DB_PASSWORD"):
+        logging.error("main/main - DB_PASSWORD environment variable is required but not set.")
+        sys.exit(1)
+
+
+def enabled_command_specs(config: dict) -> list[CommandSpec]:
+    """Return the commands enabled by the current configuration."""
+
+    return [spec for spec in COMMAND_SPECS if spec.enabled(config)]
+
+
+def register_feature_handlers(application: Application, config: dict) -> None:
+    """Register command handlers based on the active feature set."""
+
+    for spec in enabled_command_specs(config):
+        application.add_handler(CommandHandler(spec.name, spec.handler))
+        logging.info("main/main - Registered /%s handler.", spec.name)
+
+    if config["Features"]["MentionHandler"] and config["Features"]["DatabaseIntegration"] and config["Features"]["Whitelist"]:
+        application.add_handler(MessageHandler((filters.TEXT | filters.CAPTION) & ~filters.COMMAND, mention_handler))
+        logging.info("main/main - Mention handler registered.")
+
+
+def initialize_runtime_services(application: Application, config: dict) -> None:
+    """Initialize clients and caches that handlers depend on."""
+
+    if config["Features"]["DatabaseIntegration"]:
+        database = DatabaseClient(application)
+        application.bot_data["database"] = database
+        logging.info("main/main - Database integration enabled.")
+
+    if config["Features"]["InLabIntegration"] and config["Features"]["DatabaseIntegration"]:
+        inlab_client = InLabClient(application)
+        application.bot_data["inlabClient"] = inlab_client
+        logging.info("main/main - InLab integration enabled.")
+
+    if config["Features"]["QRcodeGenerator"]:
+        shlink_api = ShlinkAPI(config["Settings"]["SHLINK_API_URL"], os.getenv("SHLINK_API_KEY"))
+        application.bot_data["shlink_api"] = shlink_api
+        logging.info("main/main - QR code generator feature enabled.")
+
+    if config["Features"]["FSQuiz"]:
+        application.bot_data["areas"] = config["Settings"]["areas"]
+        logging.info("main/main - Quiz feature enabled.")
+
+    if config["Features"]["Logger"]:
+        configure_logger_reporting(config, application)
+        logging.info("main/main - Logger reporting feature enabled.")
+
+configure_bootstrap_logging()
 
 async def ps(application: Application) -> None:
     """Post-initialization hook to set bot commands and start scheduler if enabled."""
@@ -82,86 +180,22 @@ async def ps(application: Application) -> None:
         application.bot_data["whitelist"] = Whitelist(application)
         logging.info("main/main - Whitelist feature enabled.")
 
-    commands = []
-
-    # Conditional addition of mention handler command
-    if application.bot_data["config"]['Features']['MentionHandler']:
-        commands.append(BotCommand("tags", "List available tags"))
-
-    # Conditional addition of ODG command
-    if application.bot_data["config"]['Features']['ODGCommand']:
-        commands.append(BotCommand("odg", "Show ODG"))
-
-    # Conditional addition of Shop command
-    if application.bot_data["config"]['Features']['ShopCommand']:
-        commands.append(BotCommand("shop", "Show shop items"))
-
-    # Conditional addition of InLab commands
-    if application.bot_data["config"]['Features']['InLabIntegration'] and application.bot_data["config"]['Features']['DatabaseIntegration']:
-        commands.extend([
-            BotCommand("inlab", "People currently in lab"),
-            BotCommand("ore", "Your month's lab hours"),
-        ])
-
-    # Conditional addition of QR code generator command
-    if application.bot_data["config"]['Features']['QRcodeGenerator']:
-        commands.append(BotCommand("qr", "Generate a shlink QR code"))
-
-    # Conditional addition of quiz commands
-    if application.bot_data["config"]['Features']['FSQuiz']:
-        commands.extend([
-            BotCommand("question", "Get a random question"),
-        ])
-
+    commands = [BotCommand(spec.name, spec.description) for spec in enabled_command_specs(application.bot_data["config"])]
     await application.bot.set_my_commands(commands)
+    logging.info("main/main - Bot commands published.")
 
 def main() -> None:
     """Main function to set up and run the bot."""
 
-    # Validate environment variables
-    required_vars = ["TELEGRAM_BOT_TOKEN", "SHLINK_API_KEY", "CONFIG_PATH", "DB_PASSWORD"]
-    missing_vars = [var for var in required_vars if not os.getenv(var)]
-    if missing_vars:
-        if "TELEGRAM_BOT_TOKEN" in missing_vars:
-            logging.error("main/main - TELEGRAM_BOT_TOKEN environment variable is required but not set.")
-            exit(1)
-        if "CONFIG_PATH" in missing_vars:
-            logging.error("main/main - CONFIG_PATH environment variable is required but not set.")
-            exit(1)
-        if "SHLINK_API_KEY" in missing_vars and config['Features']['QRcodeGenerator']:
-            logging.error("main/main - SHLINK_API_KEY environment variable is required but not set.")
-            exit(1)
-        if "DB_PASSWORD" in missing_vars and (config['Features']['ODGCommand'] or config['Features']['FSQuiz'] or config['Features']['DatabaseIntegration'] or config['Features']['InLabIntegration'] or config['Features']['MentionHandler'] or config['Features']['Whitelist'] or config['Features']['ShopCommand']):
-            logging.error("main/main - DB_PASSWORD environment variable is required but not set.")
-            exit(1)
+    config_path = os.getenv("CONFIG_PATH")
+    if not config_path:
+        logging.error("main/main - CONFIG_PATH environment variable is required but not set.")
+        sys.exit(1)
 
-    # Load configuration from config.ini
-    with open(os.getenv("CONFIG_PATH"), "rb") as f:
-        try:
-            config = tomllib.load(f)
-        except tomllib.TOMLDecodeError as e:
-            logging.error(f"main/main - Error parsing data/config.ini: {e}")
-            exit(1)
+    config = load_config(config_path)
+    validate_environment(config)
 
-    # Configure logging from config file
-    log_level_console = config["Settings"]["ConsoleLogLevel"]
-    log_level_file = config["Settings"]["FileLogLevel"]
-    log_file_path = config["Paths"]["LogFilePath"]
-
-    # Get the root logger and set its level
-    root_logger = logging.getLogger()
-    root_logger.setLevel(getattr(logging, log_level_console))
-
-    # Add file handler
-    file_handler = logging.FileHandler(log_file_path, mode="a", encoding="utf-8")
-    file_handler.setLevel(getattr(logging, log_level_file))
-    file_handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
-    root_logger.addHandler(file_handler)
-
-    # Remove verbose logs (PTB)
-    logging.getLogger("httpx").setLevel(logging.WARNING)
-    logging.getLogger("telegram").setLevel(logging.WARNING)
-    logging.getLogger("apscheduler").setLevel(logging.WARNING)
+    configure_logging(config)
 
     application = (
         Application.builder()
@@ -177,66 +211,8 @@ def main() -> None:
     # Store config in bot_data for global access
     application.bot_data["config"] = config
 
-    # Initialize Database client if enabled
-    if config['Features']['DatabaseIntegration']:
-        database = DatabaseClient(application)
-        application.bot_data["database"] = database
-        logging.info("main/main - Database integration enabled.")
-
-    # Register handlers
-    application.add_handler(CommandHandler("start", start))
-
-    if config['Features']['Memes']:
-        application.add_handler(CommandHandler("no", no))
-        application.add_handler(CommandHandler("eduardo", eduardo))
-        logging.info("main/main - Memes are enabled and handlers registered")
-
-    # Conditional registration of mention handler and /tags command
-    if config['Features']['MentionHandler'] and config['Features']['DatabaseIntegration'] and config['Features']['Whitelist']:
-        application.add_handler(CommandHandler("tags", tags))
-        application.add_handler(MessageHandler((filters.TEXT | filters.CAPTION) & ~filters.COMMAND, mention_handler))
-        logging.info("main/main - Mention handler and /tags command enabled and handlers registered.")
-
-    # Conditional registration of info command
-    if config['Features']['IDCommand']:
-        application.add_handler(CommandHandler("id", id))
-        logging.info("main/main - Info command enabled and handler registered.")
-
-    # Conditional registration of ODG command
-    if config['Features']['ODGCommand']:
-        application.add_handler(CommandHandler("odg", odg))
-        logging.info("main/main - ODG command enabled and handler registered.")
-
-    # Conditional registration of Shop command
-    if config['Features']['ShopCommand']:
-        application.add_handler(CommandHandler("shop", shop))
-        logging.info("main/main - Shop command enabled and handler registered.")
-
-    # Conditional registration of InLab handlers
-    if config['Features']['InLabIntegration'] and config['Features']['DatabaseIntegration']:
-        inlabClient = InLabClient(application)
-        application.bot_data["inlabClient"] = inlabClient
-        application.add_handler(CommandHandler("inlab", inlab))
-        application.add_handler(CommandHandler("ore", ore))
-        logging.info("main/main - InLab integration enabled and handlers registered.")
-
-    # Conditional registration of QR code generator handler
-    if config['Features']['QRcodeGenerator']:
-        shlink_api = ShlinkAPI(config['Settings']['SHLINK_API_URL'], os.getenv("SHLINK_API_KEY"))
-        application.bot_data["shlink_api"] = shlink_api
-        application.add_handler(CommandHandler("qr", qr))
-        logging.info("main/main - QR code generator feature enabled and handler registered.")
-
-    # Conditional registration of quiz-related handlers
-    if config['Features']['FSQuiz']:
-        application.add_handler(CommandHandler("question", question))
-        application.add_handler(CommandHandler("quiz", quiz))
-        application.add_handler(CommandHandler("quizzes", quizzes))
-        application.add_handler(CommandHandler("event", event))
-        application.add_handler(CommandHandler("events", events))
-        application.add_handler(CommandHandler("answer", answer))
-        application.bot_data["areas"] = config['Settings']['areas']
-        logging.info("main/main - Quiz feature enabled and handler registered.")
+    initialize_runtime_services(application, config)
+    register_feature_handlers(application, config)
 
     # Start polling
     application.run_polling(allowed_updates=Update.ALL_TYPES)

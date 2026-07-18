@@ -2,6 +2,9 @@
 [Settings]
 ConsoleLogLevel = 'INFO' # Logging level (e.g., INFO, WARNING, ERROR)
 FileLogLevel = 'WARNING' # File logging level (e.g., INFO, WARNING, ERROR)
+ReportLogLevel = 'ERROR' # Reporting logging level (e.g., INFO, WARNING, ERROR)
+ReportGroupID = '-GroupID' # Telegram group ID for reporting logs
+ReportThreadID = '5' # Telegram thread ID for reporting logs
 areas = ["CM", "HW"] # List of areas for the /question command
 SHLINK_API_URL = 'https://shlink.domain.com' # URL of the Shlink API
 NAAS_API_URL = 'https://naas.domain.com' # URL of the NAAS API
@@ -36,6 +39,7 @@ QRcodeGenerator = false # Enable or disable the QR code generator feature
 FSQuiz = false # Enable or disable the quiz feature
 FSQuizScheduledSends = false # Enable or disable scheduled quiz sends
 Memes = true # Enable or disable all the memes features
+Logger = true # Enable or disable the **error handler** feature, the console logging is always enabled
 
 [Paths]
 LogFilePath = './data/logFile.log' # Path to the log file
