@@ -257,11 +257,16 @@ class InLabClient:
             with conn.cursor() as cursor:
 
                 query = """
-                    SELECT SUM("uscita" - "entrata") FROM "presenzalab"
+                    SELECT COALESCE(
+                        SUM(COALESCE("uscita", %s) - "entrata"),
+                        INTERVAL '0'
+                    )
+                    FROM "presenzalab"
                     WHERE "email" = %s AND "isvalid" = TRUE
                 """
 
-                cursor.execute(query, (email,))
+                now = datetime.now()
+                cursor.execute(query, (now, email))
                 result = cursor.fetchone()[0]
 
                 if not result:
