@@ -32,30 +32,19 @@ class Whitelist:
     async def _update_cache(self) -> None:
         """ Update the whitelist cache from Database. """
 
-        tasks = []
-        tag_map = []
-
-        tag_types = {
-            "areas": "Area",
-            "workgroups": "Workgroup",
-            "projects": "Project",
-            "roles": "Role"
-        }
-
-        for tag_key, tag_type in tag_types.items():
-            for tag in self.tag_cache.get(tag_key, []):
-                tasks.append(self.database.members(tag.lstrip("@"), tag_type))
-                tag_map.append(tag)
-
-        results = await asyncio.gather(*tasks)
-
-        new_whitelist = dict(zip(tag_map, results))
+        new_whitelist = await self.database.load_all_members()
 
         # Create @everyone by merging all members from all tags
         all_members = set()
         for member_list in new_whitelist.values():
             all_members.update(member_list)
         new_whitelist["@everyone"] = list(all_members)
+        
+        # Ensure tags without members still exist as empty lists
+        for tag_key in ["areas", "workgroups", "projects", "roles"]:
+            for tag in self.tag_cache.get(tag_key, []):
+                if tag not in new_whitelist:
+                    new_whitelist[tag] = []
 
         self.whitelist = new_whitelist
 

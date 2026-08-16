@@ -41,19 +41,20 @@ class CommandSpec:
     description: str
     handler: Callable
     enabled: Callable[[dict], bool]
+    publish: bool = True
 
 
 COMMAND_SPECS = [
-    CommandSpec("start", "Show a welcome message", start, lambda config: True),
-    CommandSpec("no", "Show a random excuse", no, lambda config: config["Features"]["Memes"]),
-    CommandSpec("eduardo", "Send an animation of Eduardo", eduardo, lambda config: config["Features"]["Memes"]),
+    CommandSpec("start", "Show a welcome message", start, lambda config: True, publish=False),
+    CommandSpec("no", "Show a random excuse", no, lambda config: config["Features"]["Memes"], publish=False),
+    CommandSpec("eduardo", "Send an animation of Eduardo", eduardo, lambda config: config["Features"]["Memes"], publish=False),
     CommandSpec(
         "tags",
         "List available tags",
         tags,
         lambda config: config["Features"]["MentionHandler"] and config["Features"]["DatabaseIntegration"] and config["Features"]["Whitelist"],
     ),
-    CommandSpec("id", "Show the current chat ID and your user ID", id, lambda config: config["Features"]["IDCommand"]),
+    CommandSpec("id", "Show the current chat ID and your user ID", id, lambda config: config["Features"]["IDCommand"], publish=False),
     CommandSpec("odg", "Show ODG", odg, lambda config: config["Features"]["ODGCommand"]),
     CommandSpec("shop", "Show shop items", shop, lambda config: config["Features"]["ShopCommand"]),
     CommandSpec(
@@ -70,11 +71,11 @@ COMMAND_SPECS = [
     ),
     CommandSpec("qr", "Generate a shlink QR code", qr, lambda config: config["Features"]["QRcodeGenerator"]),
     CommandSpec("question", "Get a random question", question, lambda config: config["Features"]["FSQuiz"]),
-    CommandSpec("quiz", "Fetch details for a quiz", quiz, lambda config: config["Features"]["FSQuiz"]),
-    CommandSpec("quizzes", "List available quizzes", quizzes, lambda config: config["Features"]["FSQuiz"]),
-    CommandSpec("event", "Show a random event", event, lambda config: config["Features"]["FSQuiz"]),
-    CommandSpec("events", "Show upcoming events", events, lambda config: config["Features"]["FSQuiz"]),
-    CommandSpec("answer", "Answer an open-ended question", answer, lambda config: config["Features"]["FSQuiz"]),
+    CommandSpec("quiz", "Fetch details for a quiz", quiz, lambda config: config["Features"]["FSQuiz"], publish=False),
+    CommandSpec("quizzes", "List available quizzes", quizzes, lambda config: config["Features"]["FSQuiz"], publish=False),
+    CommandSpec("event", "Show a random event", event, lambda config: config["Features"]["FSQuiz"], publish=False),
+    CommandSpec("events", "Show upcoming events", events, lambda config: config["Features"]["FSQuiz"], publish=False),
+    CommandSpec("answer", "Answer an open-ended question", answer, lambda config: config["Features"]["FSQuiz"], publish=False),
 ]
 
 
@@ -163,13 +164,7 @@ async def ps(application: Application) -> None:
 
     if application.bot_data["config"]['Features']['DatabaseIntegration']:
         # Initialize tag cache
-        tag_cache = {
-            "areas": await application.bot_data['database'].tags('Area'),
-            "workgroups": await application.bot_data['database'].tags('Workgroup'),
-            "projects": await application.bot_data['database'].tags('Project'),
-            "roles": await application.bot_data['database'].tags('Role')
-        }
-        application.bot_data["tag_cache"] = tag_cache
+        application.bot_data["tag_cache"] = await application.bot_data['database'].load_tag_cache()
         logging.info("main/main - Tag cache initialized.")
 
     if application.bot_data["config"]['Features']['FSQuizScheduledSends']:
@@ -180,7 +175,7 @@ async def ps(application: Application) -> None:
         application.bot_data["whitelist"] = Whitelist(application)
         logging.info("main/main - Whitelist feature enabled.")
 
-    commands = [BotCommand(spec.name, spec.description) for spec in enabled_command_specs(application.bot_data["config"])]
+    commands = [BotCommand(spec.name, spec.description) for spec in enabled_command_specs(application.bot_data["config"]) if spec.publish]
     await application.bot.set_my_commands(commands)
     logging.info("main/main - Bot commands published.")
 

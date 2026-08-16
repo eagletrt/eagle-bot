@@ -28,94 +28,106 @@ class DatabaseClient:
             logging.error(f"modules/database - Database connection failed: {e}")
             raise
 
-    async def tags(self, kind: str) -> list[str]:
-        """ Return all tags for the given kind. """
+    async def load_tag_cache(self) -> dict[str, list[str]]:
+        """ Load and return the tag cache for areas, workgroups, projects, and roles in a single query. """
 
         conn = self._get_connection()
         try:
             with conn.cursor() as cursor:
-
-                if kind == "Area":
-                    query = f"""
-                        SELECT "Tag" FROM {self.dbconf['bases']['hrBase']}."Areas"
-                        WHERE "__nc_deleted" IS NULL
-                        ORDER BY "Tag"
-                    """
-                elif kind == "Workgroup" or kind == "Project":
-                    query = f"""
-                        SELECT "Tag" FROM {self.dbconf['bases']['hrBase']}."Projects"
-                        WHERE "Type" = '{kind}' AND "__nc_deleted" IS NULL
-                        ORDER BY "Tag"
-                    """
-                elif kind == "Role":
-                    query = f"""
-                        SELECT "Tag" FROM {self.dbconf['bases']['hrBase']}."Roles"
-                        WHERE "__nc_deleted" IS NULL
-                        ORDER BY "Tag"
-                    """
-                else:
-                    logging.error(f"modules/database - Unsupported kind: {kind}")
-                    raise ValueError(f"Unsupported kind: {kind}")
+                query = f"""
+                    SELECT 'areas' AS kind, "Tag" FROM {self.dbconf['bases']['hrBase']}."Areas"
+                    WHERE "__nc_deleted" IS NULL
+                    UNION ALL
+                    SELECT 'workgroups' AS kind, "Tag" FROM {self.dbconf['bases']['hrBase']}."Projects"
+                    WHERE "Type" = 'Workgroup' AND "__nc_deleted" IS NULL
+                    UNION ALL
+                    SELECT 'projects' AS kind, "Tag" FROM {self.dbconf['bases']['hrBase']}."Projects"
+                    WHERE "Type" = 'Project' AND "__nc_deleted" IS NULL
+                    UNION ALL
+                    SELECT 'roles' AS kind, "Tag" FROM {self.dbconf['bases']['hrBase']}."Roles"
+                    WHERE "__nc_deleted" IS NULL
+                """
 
                 cursor.execute(query)
                 rows = cursor.fetchall()
                 
+                tag_cache = {
+                    "areas": [],
+                    "workgroups": [],
+                    "projects": [],
+                    "roles": ["@pm", "@rp"]
+                }
+
                 if not rows:
-                    logging.warning(f"modules/database - No tags found for kind: {kind}")
-                    return []
+                    logging.warning("modules/database - No tags found.")
+                    return tag_cache
                 
-                result = [f"@{row[0].lower().strip()}" for row in rows]
-                logging.info(f"modules/database - Retrieved {len(result)} tags for kind: {kind}")
-                return result
+                for row in rows:
+                    kind = row[0]
+                    tag = f"@{row[1].lower().strip()}"
+                    tag_cache[kind].append(tag)
+                
+                for kind in tag_cache:
+                    tag_cache[kind].sort()
+
+                logging.info(f"modules/database - Retrieved {len(rows)} tags in total.")
+                return tag_cache
         except Exception as e:
-            logging.error(f"modules/database - Error fetching tags for {kind}: {e}")
+            logging.error(f"modules/database - Error loading tag cache: {e}")
             raise
         finally:
             conn.close()
 
-    async def members(self, tag: str, kind: str) -> list[str]:
-        """ Return Telegram usernames for the given tag. """
+    async def load_all_members(self) -> dict[str, list[str]]:
+        """ Load all members for all tags (Areas, Projects, Workgroups, Roles) in a single query. """
 
         conn = self._get_connection()
         try:
             with conn.cursor() as cursor:
-                
-                if kind == "Area":
-                    query = f"""
-                        SELECT p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
-                        JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Areas" m ON p."id" = m."People_id"
-                        JOIN {self.dbconf['bases']['hrBase']}."Areas" a ON m."Areas_id" = a."id"
-                        WHERE a."Tag" ILIKE %s AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable') AND a."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
-                        ORDER BY p."Telegram_Username"
-                    """
-                elif kind == "Workgroup" or kind == "Project":
-                    query = f"""
-                        SELECT p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
-                        JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Projects" m ON p."id" = m."People_id"
-                        JOIN {self.dbconf['bases']['hrBase']}."Projects" pr ON m."Projects_id" = pr."id"
-                        WHERE pr."Tag" ILIKE %s AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable') AND pr."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
-                        ORDER BY p."Telegram_Username"
-                    """
-                elif kind == "Role":
-                    query = f"""
-                        SELECT p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
-                        JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Roles" m ON p."id" = m."People_id"
-                        JOIN {self.dbconf['bases']['hrBase']}."Roles" r ON m."Roles_id" = r."id"
-                        WHERE r."Tag" ILIKE %s AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable') AND r."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
-                        ORDER BY p."Telegram_Username"
-                    """
+                query = f"""
+                    SELECT a."Tag" as tag, p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
+                    JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Areas" m ON p."id" = m."People_id"
+                    JOIN {self.dbconf['bases']['hrBase']}."Areas" a ON m."Areas_id" = a."id"
+                    WHERE (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable') AND a."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
+                    UNION ALL
+                    SELECT pr."Tag" as tag, p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
+                    JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Projects" m ON p."id" = m."People_id"
+                    JOIN {self.dbconf['bases']['hrBase']}."Projects" pr ON m."Projects_id" = pr."id"
+                    WHERE (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable') AND pr."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
+                    UNION ALL
+                    SELECT r."Tag" as tag, p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
+                    JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Roles" m ON p."id" = m."People_id"
+                    JOIN {self.dbconf['bases']['hrBase']}."Roles" r ON m."Roles_id" = r."id"
+                    WHERE (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable') AND r."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
+                    UNION ALL
+                    SELECT 'pm' as tag, p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
+                    JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Projects1" m ON p."id" = m."People_id"
+                    JOIN {self.dbconf['bases']['hrBase']}."Projects" pr ON m."Projects_id" = pr."id"
+                    WHERE pr."Type" = 'Project' AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable') AND pr."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
+                    UNION ALL
+                    SELECT 'rp' as tag, p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
+                    JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Projects1" m ON p."id" = m."People_id"
+                    JOIN {self.dbconf['bases']['hrBase']}."Projects" pr ON m."Projects_id" = pr."id"
+                    WHERE pr."Type" = 'Workgroup' AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable') AND pr."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
+                """
 
-                cursor.execute(query, (tag.upper(),))
+                cursor.execute(query)
                 rows = cursor.fetchall()
                 
-                if not rows:
-                    logging.warning(f"modules/database - No members found for tag: {tag} of kind: {kind}")
-                    return []
+                members_map = {}
+                for row in rows:
+                    if not row[0] or not row[1]:
+                        continue
+                    tag = f"@{row[0].lower().strip()}"
+                    username = f"{row[1].lower().strip()}"
+                    if tag not in members_map:
+                        members_map[tag] = []
+                    members_map[tag].append(username)
                 
-                logging.info(f"modules/database - Retrieved {len(rows)} members for tag: {tag} of kind: {kind}")
-                return [f"{row[0].lower().strip()}" for row in rows if row[0]]
+                logging.info(f"modules/database - Retrieved members for {len(members_map)} tags in a single query.")
+                return members_map
         except Exception as e:
-            logging.error(f"modules/database - Error fetching members for tag {tag} of kind {kind}: {e}")
+            logging.error(f"modules/database - Error loading all members: {e}")
             raise
         finally:
             conn.close()
