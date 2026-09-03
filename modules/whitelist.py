@@ -22,6 +22,7 @@ class Whitelist:
         scheduler.add_job(
             self._update_cache,
             'cron',
+            misfire_grace_time=None,
             **{field: value for field, value in zip(['minute', 'hour', 'day', 'month', 'day_of_week'], cron.split())}
         )
 

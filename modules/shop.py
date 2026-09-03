@@ -1,65 +1,113 @@
-from datetime import datetime  # used for timestamps on Task creation
-from pony.orm import Database, Required, Optional, Set  # Pony ORM constructs
+import os
 import tomllib
 import logging
-import os
 import random
+from datetime import datetime
+import psycopg2
+from psycopg2.pool import SimpleConnectionPool
+from contextlib import contextmanager
 
-# Load configuration from config.ini
 with open(os.getenv("CONFIG_PATH"), "rb") as f:
     try:
         config = tomllib.load(f)
     except tomllib.TOMLDecodeError as e:
-        logging.error(f"modules/shop - Error parsing data/config.ini: {e}")
+        logging.error(f"modules/shop - Error parsing config: {e}")
         exit(1)
 
-# Create a Database object connected to a PostgreSQL database.
-db = Database()
-db.bind(provider="postgres", user=config['Database']['DB_USER'], password=os.getenv("DB_PASSWORD"), host=config['Database']['DB_HOST'], port=config['Database']['DB_PORT'], database=config['Database']['DB_NAME'])
+db_pool = SimpleConnectionPool(
+    1, 20,
+    user=config['Database']['DB_USER'],
+    password=os.getenv("DB_PASSWORD"),
+    host=config['Database']['DB_HOST'],
+    port=config['Database']['DB_PORT'],
+    database=config['Database']['DB_NAME']
+)
 
-class Item(db.Entity):
-    """ Item entity/table representing individual items in a SHOP. """
+@contextmanager
+def get_connection():
+    conn = db_pool.getconn()
+    try:
+        yield conn
+    finally:
+        db_pool.putconn(conn)
 
-    text = Required(str)  # The item text/content
-    created_by = Required(str)  # Username or identifier of the creator
-    created_at = Required(datetime, default=datetime.now)  # Timestamp set at creation by default
-    priority = Required(int, default=0)  # Integer priority with an index name
-    shop = Required("SHOP")  # Many-to-one relation to SHOP (foreign key)
+def create_tables():
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS shop (
+                    id SERIAL PRIMARY KEY,
+                    chatid BIGINT NOT NULL,
+                    threadid BIGINT
+                )
+            ''')
+            cur.execute('''
+                CREATE TABLE IF NOT EXISTS item (
+                    id SERIAL PRIMARY KEY,
+                    text TEXT NOT NULL,
+                    created_by TEXT NOT NULL,
+                    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+                    priority INT NOT NULL DEFAULT 0,
+                    shop INT NOT NULL REFERENCES shop(id)
+                )
+            ''')
+        conn.commit()
 
-    def __str__(self):
-        """ String representation of the Item for display purposes. """
+create_tables()
 
-        return f"{random.choice(['🪑', '📦', '🎁', '🧸', '🛍️', '📚', '🍀', '⚙️', '🚪', '🎨', '🔨', '🏎️', '🎹', '⚽️', '🎾', '✈️', '💻', '🖨️', '🕰️', '📻', '💾', '🧯', '📞' , '💣', '🪓', '🪚', '🎸', '🪏', '🧱', '🪜', '🧽', '🪣', '⚰️', '🔩', '💸'])} {self.text}"
+def get_or_create_shop(chat_id, thread_id):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            if thread_id is not None:
+                cur.execute('SELECT id FROM shop WHERE chatid = %s AND threadid = %s', (chat_id, thread_id))
+            else:
+                cur.execute('SELECT id FROM shop WHERE chatid = %s AND threadid IS NULL', (chat_id,))
+            row = cur.fetchone()
+            if row:
+                return row[0]
+            
+            cur.execute('INSERT INTO shop (chatid, threadid) VALUES (%s, %s) RETURNING id', (chat_id, thread_id))
+            shop_id = cur.fetchone()[0]
+            conn.commit()
+            return shop_id
 
-class SHOP(db.Entity):
-    """ SHOP entity/table representing a collection of items for a chat/thread. """
-    
-    chatId = Required(int, sql_type='BIGINT', size=64)  # Chat identifier stored as big integer
-    threadId = Optional(int, sql_type='BIGINT', size=64)  # Optional thread identifier (nullable)
-    items = Set(Item, reverse="shop")  # One-to-many relation: a SHOP has many Items; reverse points to Item.shop
+def reset_shop(shop_id):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute('DELETE FROM item WHERE shop = %s', (shop_id,))
+        conn.commit()
 
-    def __str__(self):
-        """ String representation of the SHOP and its items for display purposes. """
+def remove_item(shop_id, item_idx):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute('SELECT id FROM item WHERE shop = %s ORDER BY created_at LIMIT 1 OFFSET %s', (shop_id, item_idx))
+            row = cur.fetchone()
+            if row:
+                cur.execute('DELETE FROM item WHERE id = %s', (row[0],))
+                conn.commit()
+                return True
+            return False
 
-        if self.items.is_empty():
-            return "Shop list is empty."
-        return "\n\n".join(str(item) for item in list(self.items.order_by(Item.created_at)))
+def add_item(shop_id, text, created_by):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute('INSERT INTO item (text, created_by, created_at, priority, shop) VALUES (%s, %s, %s, 0, %s)', (text, created_by, datetime.now(), shop_id))
+        conn.commit()
 
-    def reset(self):
-        """ Remove all items from this SHOP. """
+def format_shop(shop_id):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute('SELECT text FROM item WHERE shop = %s ORDER BY created_at', (shop_id,))
+            rows = cur.fetchall()
+            
+    if not rows:
+        return "Shop list is empty."
         
-        for item in self.items:
-            item.delete()
-        self.items.clear()
-
-    def remove_item(self, item_idx: int) -> bool:
-        """ Remove a specific item by its index in the ordered list of items. """
-
-        item = list(self.items.order_by(Item.created_at).limit(1, offset=item_idx))
-        if item:
-            item[0].delete()
-            return True
-        return False
-
-# Generate mapping between the above entities and the actual database tables.
-db.generate_mapping(create_tables=True)
+    emojis = ['🪑', '📦', '🎁', '🧸', '🛍️', '📚', '🍀', '⚙️', '🚪', '🎨', '🔨', '🏎️', '🎹', '⚽️', '🎾', '✈️', '💻', '🖨️', '🕰️', '📻', '💾', '🧯', '📞', '💣', '🪓', '🪚', '🎸', '🪏', '🧱', '🪜', '🧽', '🪣', '⚰️', '🔩', '💸']
+    
+    items = []
+    for (text,) in rows:
+        emoji = random.choice(emojis)
+        items.append(f"{emoji} {text}")
+        
+    return "\n\n".join(items)

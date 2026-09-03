@@ -1,6 +1,5 @@
 import logging
-from pony.orm import db_session
-from modules.quiz import Events
+from modules.quiz import get_all_events
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -24,16 +23,15 @@ async def events(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     
     # Fetch all events and format them into a list for the reply
-    with db_session:
-        event_list = Events.select().order_by(Events.event_id)
-        if not event_list:
-            logging.error(f"commands/events - No events found for user @{username}")
-            await update.message.reply_html("No events found in the database.")
-            return
-    
-        event_texts = []
-        for e in event_list:
-            event_texts.append(f"<code>/event {e.event_id}</code> - {e.short_name}")
+    event_list = get_all_events()
+    if not event_list:
+        logging.error(f"commands/events - No events found for user @{username}")
+        await update.message.reply_html("No events found in the database.")
+        return
+
+    event_texts = []
+    for e in event_list:
+        event_texts.append(f"<code>/event {e['event_id']}</code> - {e['short_name']}")
     
     logging.info(f"commands/events - User @{username} requested correctly the list of available events")
     await update.message.reply_html(

@@ -1,6 +1,5 @@
 import logging
-from pony.orm import db_session
-from modules.quiz import Quiz
+from modules.quiz import get_quiz
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -35,19 +34,18 @@ async def quiz(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     
     # Fetch the quiz from the database and reply with its details
-    with db_session:
-        quiz_entity = Quiz.get(quiz_id=id)
-        if not quiz_entity:
-            logging.info(f"commands/quiz - Quiz with ID {id} not found for user @{username}")
-            await update.message.reply_html(f"Quiz with ID {id} not found.")
-            return
+    quiz_entity = get_quiz(id)
+    if not quiz_entity:
+        logging.info(f"commands/quiz - Quiz with ID {id} not found for user @{username}")
+        await update.message.reply_html(f"Quiz with ID {id} not found.")
+        return
     
-    logging.info(f"commands/quiz - User @{username} requested correctly details for quiz ID {quiz_entity.quiz_id}")
+    logging.info(f"commands/quiz - User @{username} requested correctly details for quiz ID {quiz_entity['quiz_id']}")
     await update.message.reply_html(
-        f"<b>Quiz ID {quiz_entity.quiz_id}</b>\n"
-        f"Year: {quiz_entity.year}\n"
-        f"Class: {quiz_entity.class_}\n"
-        f"Date: {quiz_entity.date}\n"
-        f"Information: {quiz_entity.information}\n"
+        f"<b>Quiz ID {quiz_entity['quiz_id']}</b>\n"
+        f"Year: {quiz_entity['year']}\n"
+        f"Class: {quiz_entity['class_']}\n"
+        f"Date: {quiz_entity['date']}\n"
+        f"Information: {quiz_entity['information']}\n"
     )
     return

@@ -1,6 +1,5 @@
 import logging
-from pony.orm import db_session
-from modules.quiz import Quiz
+from modules.quiz import get_all_quizzes
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -24,16 +23,15 @@ async def quizzes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         return
     
     # Fetch all quizzes and format them into a list for the reply
-    with db_session:
-        all_quizzes = Quiz.select().order_by(Quiz.quiz_id)
-        if not all_quizzes:
-            logging.error(f"commands/quizzes - No quizzes found for user @{username}")
-            await update.message.reply_html("No quizzes found in the database.")
-            return
-    
-        quiz_texts = []
-        for q in all_quizzes:
-            quiz_texts.append(f"<code>/quiz {q.quiz_id}</code> - {q.year} {q.class_}")
+    all_quizzes = get_all_quizzes()
+    if not all_quizzes:
+        logging.error(f"commands/quizzes - No quizzes found for user @{username}")
+        await update.message.reply_html("No quizzes found in the database.")
+        return
+
+    quiz_texts = []
+    for q in all_quizzes:
+        quiz_texts.append(f"<code>/quiz {q['quiz_id']}</code> - {q['year']} {q['class_']}")
     
     logging.info(f"commands/quizzes - User @{username} requested correctly the list of available quizzes")
     await update.message.reply_html(
