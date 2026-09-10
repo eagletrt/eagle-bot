@@ -198,6 +198,8 @@ def main() -> None:
         .post_init(ps)
         .read_timeout(30)
         .write_timeout(30)
+        .get_updates_read_timeout(30)
+        .get_updates_write_timeout(30)
         .build()
     )
 

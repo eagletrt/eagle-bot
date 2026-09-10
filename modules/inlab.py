@@ -211,7 +211,7 @@ class InLabClient:
                         logging.warning(f"modules/inlab - No ore data found for user {email} this season")
                         return {}
 
-                    seasons = ['Fenice EVO | 2022-2023', 'Hydra | 2023-2024', 'Kraken | 2024-2025', 'Kraken | 2025-2026']
+                    seasons = ['Fenice EVO | 2022-2023', 'Hydra | 2023-2024', 'Kraken | 2024-2025', 'Kraken | 2025-2026', 'Kraken EVO | 2026-2027']
 
                     per_season = {s: 0.0 for s in seasons}
                     for entrata, uscita in rows:
@@ -233,6 +233,8 @@ class InLabClient:
                             per_season['Kraken | 2024-2025'] += hours
                         elif season_key == "2025-2026":
                             per_season['Kraken | 2025-2026'] += hours
+                        elif season_key == "2026-2027":
+                            per_season['Kraken EVO | 2026-2027'] += hours
 
                     logging.info(f"modules/inlab - Retrieved ore per-season data for user {email} this season: {per_season}")
                     return per_season
