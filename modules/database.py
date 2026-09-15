@@ -90,27 +90,27 @@ class DatabaseClient:
                         SELECT a."Tag" as tag, p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
                         JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Areas" m ON p."id" = m."People_id"
                         JOIN {self.dbconf['bases']['hrBase']}."Areas" a ON m."Areas_id" = a."id"
-                        WHERE (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable') AND a."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
+                        WHERE (p."State" = 'Active Member' OR p."State" = 'In trial') AND a."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
                         UNION ALL
                         SELECT pr."Tag" as tag, p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
                         JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Projects" m ON p."id" = m."People_id"
                         JOIN {self.dbconf['bases']['hrBase']}."Projects" pr ON m."Projects_id" = pr."id"
-                        WHERE (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable') AND pr."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
+                        WHERE (p."State" = 'Active Member' OR p."State" = 'In trial') AND pr."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
                         UNION ALL
                         SELECT r."Tag" as tag, p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
                         JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Roles" m ON p."id" = m."People_id"
                         JOIN {self.dbconf['bases']['hrBase']}."Roles" r ON m."Roles_id" = r."id"
-                        WHERE (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable') AND r."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
+                        WHERE (p."State" = 'Active Member' OR p."State" = 'In trial') AND r."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
                         UNION ALL
                         SELECT 'pm' as tag, p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
                         JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Projects1" m ON p."id" = m."People_id"
                         JOIN {self.dbconf['bases']['hrBase']}."Projects" pr ON m."Projects_id" = pr."id"
-                        WHERE pr."Type" = 'Project' AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable') AND pr."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
+                        WHERE pr."Type" = 'Project' AND (p."State" = 'Active Member' OR p."State" = 'In trial') AND pr."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
                         UNION ALL
                         SELECT 'rp' as tag, p."Telegram_Username" FROM {self.dbconf['bases']['hrBase']}."People" p
                         JOIN {self.dbconf['bases']['hrBase']}."_nc_m2m_People_Projects1" m ON p."id" = m."People_id"
                         JOIN {self.dbconf['bases']['hrBase']}."Projects" pr ON m."Projects_id" = pr."id"
-                        WHERE pr."Type" = 'Workgroup' AND (p."State" = 'Active Member' OR p."State" = 'In trial' OR p."State" = 'Reachable') AND pr."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
+                        WHERE pr."Type" = 'Workgroup' AND (p."State" = 'Active Member' OR p."State" = 'In trial') AND pr."__nc_deleted" IS NULL AND p."__nc_deleted" IS NULL
                     """
 
                     cursor.execute(query)
