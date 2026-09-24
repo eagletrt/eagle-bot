@@ -16,6 +16,7 @@ from modules.scheduler import setup_scheduler
 # Import command handlers
 from commands.start import start
 from commands.odg import odg
+from commands.odgdocs import odgdocs
 from commands.shop import shop
 from commands.inlab import inlab
 from commands.ore import ore
@@ -56,6 +57,7 @@ COMMAND_SPECS = [
     ),
     CommandSpec("id", "Show the current chat ID and your user ID", id, lambda config: config["Features"]["IDCommand"], publish=False),
     CommandSpec("odg", "Show ODG", odg, lambda config: config["Features"]["ODGCommand"]),
+    CommandSpec("odgdocs", "Show ODG for documentation", odgdocs, lambda config: config["Features"]["ODGCommand"]),
     CommandSpec("shop", "Show shop items", shop, lambda config: config["Features"]["ShopCommand"]),
     CommandSpec(
         "inlab",

@@ -130,3 +130,19 @@ def format_odg(odg_id):
                 return "ODG list is empty."
             
             return "\n\n".join(f"📋 {text}\n👤 {created_by}" for text, created_by in rows)
+
+def format_odgdocs(odg_id):
+    """Returns the formatted string representation of the tasks."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT text, created_by FROM task
+                WHERE odg = %s
+                ORDER BY created_at
+            """, (odg_id,))
+            rows = cur.fetchall()
+            
+            if not rows:
+                return "ODG list is empty."
+            
+            return "\n".join(f"- {text} | {created_by.split(' [')[0]}" for text, created_by in rows)
