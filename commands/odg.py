@@ -1,5 +1,5 @@
 import logging
-from modules.odg import get_or_create_odg, reset_odg, remove_task, add_task, format_odg
+from modules.odg import get_or_create_odg, reset_odg, remove_task, remove_task_by_name, add_task, format_odg
 from telegram import Update
 from telegram.ext import ContextTypes
 
@@ -43,26 +43,37 @@ async def odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Remove a task by its shown ID (user-provided). Convert to zero-based index for internal store.
     elif text.lower().startswith("/odg remove"):
         try:
-            task_id = int(text.split(' ', 2)[2])
-        except (ValueError, IndexError):
-
-            # If parsing failed, notify the user
-            logging.warning(f"commands/odg - User @{username} provided invalid task ID for removal in chat {chat_id} thread {thread_id}")
-            await update.message.reply_text("Task ID must be a number.")
+            task_string = text.split(' ', 2)[2]
+        except IndexError:
+            await update.message.reply_text("Please provide a task ID or name to remove.")
             return
 
-        if task_id < 1:
-            logging.warning(f"commands/odg - User @{username} provided invalid task ID for removal in chat {chat_id} thread {thread_id}")
-            await update.message.reply_text("Task ID must be a positive number.")
-            return
+        try:
+            task_id = int(task_string)
+            is_id = True
+        except ValueError:
+            is_id = False
 
-        # remove_task expects zero-based index; if removal was successful react with thumbs up
-        if remove_task(odg_id, task_id-1):
-            logging.info(f"commands/odg - User @{username} removed task #{task_id} from the ODG in chat {chat_id} thread {thread_id}")
-            await update.message.set_reaction("👍")
+        if is_id:
+            if task_id < 1:
+                logging.warning(f"commands/odg - User @{username} provided invalid task ID for removal in chat {chat_id} thread {thread_id}")
+                await update.message.reply_text("Task ID must be a positive number.")
+                return
+
+            # remove_task expects zero-based index; if removal was successful react with thumbs up
+            if remove_task(odg_id, task_id-1):
+                logging.info(f"commands/odg - User @{username} removed task #{task_id} from the ODG in chat {chat_id} thread {thread_id}")
+                await update.message.set_reaction("👍")
+            else:
+                logging.warning(f"commands/odg - User @{username} attempted to remove non-existent task #{task_id} from the ODG in chat {chat_id} thread {thread_id}")
+                await update.message.reply_text(f"Task #{task_id} not found in the todo list.")
         else:
-            logging.warning(f"commands/odg - User @{username} attempted to remove non-existent task #{task_id} from the ODG in chat {chat_id} thread {thread_id}")
-            await update.message.reply_text(f"Task #{task_id} not found in the todo list.")
+            if remove_task_by_name(odg_id, task_string):
+                logging.info(f"commands/odg - User @{username} removed task '{task_string}' from the ODG in chat {chat_id} thread {thread_id}")
+                await update.message.set_reaction("👍")
+            else:
+                logging.warning(f"commands/odg - User @{username} attempted to remove non-existent task '{task_string}' from the ODG in chat {chat_id} thread {thread_id}")
+                await update.message.reply_text(f"Task '{task_string}' not found in the todo list.")
         return
         
     # Add a new task. The user-provided text follows the command (/odg <text>)

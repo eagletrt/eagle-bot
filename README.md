@@ -167,6 +167,7 @@ This file is divided into sections:
 | ----------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------|
 | `/start`    | Shows a welcome message.                                | `/start`                                                                               |
 | `/odg`      | Manages the Agenda (ODG).                               | `/odg`, `/odg <task>`, `/odg remove <id>`, `/odg reset`                                |
+| `/odgdocs`  | Shows the Agenda (ODG) in a format suitable for documentation. | `/odgdocs`                                                                      |
 | `/shop`     | Manage shop items (view/add/remove/reset).              | `/shop`, `/shop <item>`, `/shop add <item>`, `/shop remove <id>`, `/shop reset`        |
 | `/tags`     | Shows available tags (areas, projects, etc.).           | `/tags`                                                                                |
 | `/inlab`    | Shows who is currently in the lab.                      | `/inlab`                                                                               |
