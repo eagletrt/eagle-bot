@@ -181,6 +181,7 @@ This file is divided into sections:
 | `/id`       | Shows the current chat ID and your user ID.             | `/id`                                                                                  |
 | `/no`       | Shows a random excuse from the naas API.                | `/no`                                                                                  |
 | `/eduardo`  | Sends an animation of Eduardo.                          | `/eduardo`                                                                             |
+| `/restart`  | Restarts the bot (requires admin privileges).           | `/restart`                                                                             |
 
 ### Mentions
 

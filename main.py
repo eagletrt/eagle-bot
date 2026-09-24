@@ -32,6 +32,7 @@ from commands.answer import answer
 from commands.id import id
 from commands.no import no
 from commands.eduardo import eduardo
+from commands.restart import restart
 
 
 @dataclass(frozen=True)
@@ -78,6 +79,13 @@ COMMAND_SPECS = [
     CommandSpec("event", "Show a random event", event, lambda config: config["Features"]["FSQuiz"], publish=False),
     CommandSpec("events", "Show upcoming events", events, lambda config: config["Features"]["FSQuiz"], publish=False),
     CommandSpec("answer", "Answer an open-ended question", answer, lambda config: config["Features"]["FSQuiz"], publish=False),
+    CommandSpec(
+        "restart",
+        "Restart the bot (requires admin privileges)",
+        restart,
+        lambda config: config["Features"]["Whitelist"] and config["Features"]["DatabaseIntegration"] and config["Features"]["MentionHandler"],
+        publish=False
+    ),
 ]
 
 

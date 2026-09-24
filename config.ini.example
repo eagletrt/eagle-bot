@@ -23,6 +23,7 @@ hrBase = 'qwertyuiop12345'
 
 [Whitelist]
 General = ['@everyone'] # Telegram usernames allowed bot access
+Restart = ['@it'] # Telegram usernames allowed to use the /restart command
 cron = '*/30 * * * *' # Cron schedule for refreshing the whitelist (default: every 30 minutes)
 Quiz = ['@it', '@sw', '@user123'] # Telegram usernames allowed to use quiz admin features
 QRcodeGroups = ['-GroupID', '-GroupID'] # List of Telegram group IDs where QR code features are allowed
