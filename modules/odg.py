@@ -105,6 +105,23 @@ def remove_task(odg_id, task_idx):
                 return True
             return False
 
+def remove_task_by_name(odg_id, text):
+    """Removes the task matching the provided text."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id FROM task 
+                WHERE odg = %s AND text = %s
+                ORDER BY created_at 
+                LIMIT 1
+            """, (odg_id, text))
+            row = cur.fetchone()
+            if row:
+                cur.execute("DELETE FROM task WHERE id = %s", (row[0],))
+                conn.commit()
+                return True
+            return False
+
 def add_task(odg_id, text, created_by):
     """Inserts a new task."""
     with get_connection() as conn:
