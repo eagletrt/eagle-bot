@@ -81,7 +81,7 @@ async def mention_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
         # If members found, reply with an HTML-formatted list
         if members:
-            tag_list = ' '.join(members)
+            tag_list = ' '.join(set(members))
             message = message + f"<b>{tag}</b>:\n{tag_list}\n\n"
         
     # If we have a message to send, reply with it
