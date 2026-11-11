@@ -39,7 +39,7 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             quiz_id = id_parts[1]
 
             q = get_question(question_id, quiz_id)
-            if not q or not is_question_valid(q['id'], q['quiz_id']):
+            if not q or not is_question_valid(q['id']):
                 logging.info(f"commands/question - No valid question found for question ID {question_id} in quiz ID {quiz_id} for user @{username}")
                 await update.message.reply_text(f"No valid question found for question ID {question_id} in quiz ID {quiz_id}.")
                 return
@@ -54,7 +54,7 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 return
 
             q = get_random_question(area_code)
-            while q and not is_question_valid(q['id'], q['quiz_id']):
+            while q and not is_question_valid(q['id']):
                 q = get_random_question(area_code)
 
         else:
@@ -65,12 +65,12 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     else:
         # If no ID, fetch a random valid question.
         q = get_random_question()
-        while q and not is_question_valid(q['id'], q['quiz_id']):
+        while q and not is_question_valid(q['id']):
             q = get_random_question()
 
-    answers = get_question_answers(q['id'], q['quiz_id'])
-    images = get_question_images(q['id'], q['quiz_id'])
-    areas = get_question_areas(q['id'], q['quiz_id'])
+    answers = get_question_answers(q['id'])
+    images = get_question_images(q['id'])
+    areas = get_question_areas(q['id'])
 
     qtext = f"Question {q['id']}-{q['quiz_id']} {q['type']}"
 
@@ -84,10 +84,10 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     
     # Send question text and any associated images
     if len(images) == 1:
-        await update.message.reply_photo(f"https://img.fs-quiz.eu/{images[0]['path']}", caption=f"{q['text']}")
+        await update.message.reply_photo(images[0]['data'], caption=f"{q['text']}", filename=images[0]['filename'])
     elif len(images) > 1:
         media_group = [
-            InputMediaPhoto(media=f"https://img.fs-quiz.eu/{img['path']}")
+            InputMediaPhoto(media=img['data'], filename=img['filename'])
             for img in images
         ]
         await update.message.reply_media_group(media=media_group)

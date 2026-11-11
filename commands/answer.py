@@ -45,8 +45,8 @@ async def answer(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         logging.info(f"commands/answer - Question with ID {id} not found for user @{username}")
         await update.message.reply_html(f"Question with ID {id} not found.")
         return
-    answers = get_question_answers(question_id, quiz_id)
-    areas = get_question_areas(question_id, quiz_id)
+    answers = get_question_answers(question_id)
+    areas = get_question_areas(question_id)
     
     # Format the answers, indicating which are correct
     answer_texts = []

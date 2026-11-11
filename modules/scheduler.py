@@ -7,11 +7,11 @@ async def send_scheduled_question(bot, group_id, thread_id, area_code):
     """ Fetches a random question and sends it to the specified group and thread. """
 
     question = get_random_question(area_code)
-    while question and not is_question_valid(question['id'], question['quiz_id']):
+    while question and not is_question_valid(question['id']):
         question = get_random_question(area_code)
 
-    answers = get_question_answers(question['id'], question['quiz_id'])
-    images = get_question_images(question['id'], question['quiz_id'])
+    answers = get_question_answers(question['id'])
+    images = get_question_images(question['id'])
 
     qtext = f"Question {question['id']}-{question['quiz_id']} {question['type']} | {area_code}"
 
@@ -27,11 +27,11 @@ async def send_scheduled_question(bot, group_id, thread_id, area_code):
         await bot.send_photo(
             chat_id=group_id,
             message_thread_id=thread_id,
-            photo=f"https://img.fs-quiz.eu/{images[0]['path']}", caption=f"{question['text']}"
+            photo=images[0]['data'], filename=images[0]['filename'], caption=f"{question['text']}"
         )
     elif len(images) > 1:
         media_group = [
-            InputMediaPhoto(media=f"https://img.fs-quiz.eu/{img['path']}")
+            InputMediaPhoto(media=img['data'], filename=img['filename'])
             for img in images
         ]
         await bot.send_media_group(
