@@ -3,7 +3,7 @@ from modules.quiz import get_random_question, is_question_valid, get_question_an
 from telegram import InputMediaPhoto
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-async def send_scheduled_question(bot, group_id, thread_id, area_code):
+async def send_scheduled_question(bot, group_id, thread_id, area_code, is_anonymous=True):
     """ Fetches a random question and sends it to the specified group and thread. """
 
     question = get_random_question(area_code)
@@ -61,7 +61,7 @@ async def send_scheduled_question(bot, group_id, thread_id, area_code):
         options=options,
         type="quiz",
         correct_option_id=correct_indices[0],
-        is_anonymous=True,
+        is_anonymous=is_anonymous,
     )
 
     # Store the mapping between the poll ID and the question in the database
@@ -97,7 +97,7 @@ def gen_scheduler(scheduler, application, division, config) -> None:
             send_scheduled_question,
             'cron',
             misfire_grace_time=None,
-            args=[application.bot, group_id, thread_id, area[i]],
+            args=[application.bot, group_id, thread_id, area[i], not config['Features']['FSQuizLogging']],
             **{field: value for field, value in zip(['minute', 'hour', 'day', 'month', 'day_of_week'], cron_schedule.split())}
         )
         logging.info(f"modules/scheduler - Job scheduled for division {division}, group {group_id}, thread {thread_id}, area {area[i]} with cron '{cron_schedule}'")

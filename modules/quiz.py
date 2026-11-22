@@ -201,3 +201,13 @@ def create_poll(poll_id, question_id, quiz_id, correct_option):
                 VALUES (%s, %s, %s, %s)
             """, (str(poll_id), quiz_id, question_id, correct_option))
         conn.commit()
+
+def log_poll_answer(poll_id, username, option_index):
+    """Inserts a user's answer to a poll; answered_at defaults to NOW()."""
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO polls_answers (poll_id, username, option_index)
+                VALUES (%s, %s, %s)
+            """, (str(poll_id), username, option_index))
+        conn.commit()

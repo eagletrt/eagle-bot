@@ -10,7 +10,7 @@ from modules.logger import configure_bootstrap_logging, configure_logging, confi
 from modules.shlink import ShlinkAPI
 from modules.whitelist import Whitelist
 from telegram import Update, BotCommand
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, PollAnswerHandler, filters
 from modules.scheduler import setup_scheduler
 
 # Import command handlers
@@ -33,6 +33,7 @@ from commands.id import id
 from commands.no import no
 from commands.eduardo import eduardo
 from commands.restart import restart
+from commands.poll_answer import poll_answer
 
 
 @dataclass(frozen=True)
@@ -139,6 +140,10 @@ def register_feature_handlers(application: Application, config: dict) -> None:
     if config["Features"]["MentionHandler"] and config["Features"]["DatabaseIntegration"] and config["Features"]["Whitelist"]:
         application.add_handler(MessageHandler((filters.TEXT | filters.CAPTION) & ~filters.COMMAND, mention_handler))
         logging.info("main/main - Mention handler registered.")
+
+    if config["Features"]["FSQuiz"] and config["Features"]["FSQuizLogging"]:
+        application.add_handler(PollAnswerHandler(poll_answer))
+        logging.info("main/main - Poll answer handler registered.")
 
 
 def initialize_runtime_services(application: Application, config: dict) -> None:

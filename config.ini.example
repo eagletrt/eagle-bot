@@ -39,6 +39,7 @@ Whitelist = true # Enable or disable the whitelist feature (!!WARN: requires Dat
 QRcodeGenerator = false # Enable or disable the QR code generator feature
 FSQuiz = false # Enable or disable the quiz feature
 FSQuizScheduledSends = false # Enable or disable scheduled quiz sends
+FSQuizLogging = true # Enable or disable quiz logging to the database
 Memes = true # Enable or disable all the memes features
 Logger = true # Enable or disable the **error handler** feature, the console logging is always enabled
 

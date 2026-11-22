@@ -103,7 +103,7 @@ async def question(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         options,
         type="quiz",
         correct_option_id=correct_indices[0],
-        is_anonymous=True,
+        is_anonymous=not context.bot_data['config']['Features']['FSQuizLogging'],
     )
 
     # Store the mapping between the poll ID and the question in the database
