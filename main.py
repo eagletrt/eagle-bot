@@ -33,6 +33,7 @@ from commands.id import id
 from commands.no import no
 from commands.eduardo import eduardo
 from commands.restart import restart
+from commands.tt import tt
 from commands.poll_answer import poll_answer
 
 
@@ -87,6 +88,7 @@ COMMAND_SPECS = [
         lambda config: config["Features"]["Whitelist"] and config["Features"]["DatabaseIntegration"] and config["Features"]["MentionHandler"],
         publish=False
     ),
+    CommandSpec("tt", "Summon TermoTomas", tt, lambda config: config["Features"]["Memes"], publish=False),
 ]
 
 
